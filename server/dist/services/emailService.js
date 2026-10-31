@@ -28,31 +28,27 @@ async function getTransporter() {
             !smtpUser?.includes('demo.com') &&
             !smtpPass?.includes('demo_pass');
         if (isRealCredentials) {
-            if (isGmail) {
-                transporter = nodemailer_1.default.createTransport({
-                    service: 'gmail',
-                    auth: {
-                        user: smtpUser,
-                        pass: smtpPass,
-                    },
-                });
-                console.log(`[Email Service] Connected to Gmail SMTP for ${smtpUser}`);
-            }
-            else {
-                transporter = nodemailer_1.default.createTransport({
-                    host: smtpHost || 'smtp.gmail.com',
-                    port: Number(process.env.SMTP_PORT) || 587,
-                    secure: Number(process.env.SMTP_PORT) === 465,
-                    auth: {
-                        user: smtpUser,
-                        pass: smtpPass,
-                    },
-                });
-                console.log(`[Email Service] Connected to Custom SMTP (${smtpHost}:${process.env.SMTP_PORT || 587})`);
-            }
+            // Use standard Port 587 with STARTTLS - universally supported across Render, AWS, Heroku
+            // Avoid Port 465 SSL hangs on cloud datacenters
+            transporter = nodemailer_1.default.createTransport({
+                host: isGmail ? 'smtp.gmail.com' : (smtpHost || 'smtp.gmail.com'),
+                port: 587,
+                secure: false, // Port 587 uses STARTTLS
+                auth: {
+                    user: smtpUser,
+                    pass: smtpPass,
+                },
+                connectionTimeout: 7000, // 7 seconds timeout max (never hang request)
+                greetingTimeout: 5000,
+                socketTimeout: 10000,
+                tls: {
+                    rejectUnauthorized: false,
+                },
+            });
+            console.log(`[Email Service] Configured SMTP (${isGmail ? 'Gmail' : smtpHost}:587) for ${smtpUser}`);
         }
         else {
-            console.log('[Email Service] Real SMTP credentials (Gmail / SMTP_USER) not yet set in server/.env.');
+            console.log('[Email Service] Real SMTP credentials (SMTP_USER & SMTP_PASS) not yet set in environment.');
         }
     }
     catch (err) {
@@ -61,15 +57,15 @@ async function getTransporter() {
     return transporter;
 }
 async function sendOtpEmail(to, name, otp) {
+    // Always log OTP to server console / Render logs immediately
+    console.log(`\n======================================================`);
+    console.log(`🔑 [VERIFICATION OTP FOR ${to}]: ${otp}`);
+    console.log(`======================================================\n`);
     try {
         const mailer = await getTransporter();
         if (!mailer) {
-            console.log(`\n======================================================`);
-            console.log(`🔑 [VERIFICATION OTP FOR ${to}]: ${otp}`);
-            console.log(`📌 To deliver OTP directly to user's real email inbox,`);
-            console.log(`   configure SMTP_USER & SMTP_PASS (Gmail App Password) in server/.env`);
-            console.log(`======================================================\n`);
-            return { sent: false, reason: 'SMTP credentials not configured in server/.env' };
+            console.log(`📌 Note: SMTP_PASS / SMTP_USER not set in environment.`);
+            return { sent: false, reason: 'SMTP credentials not configured in environment' };
         }
         const fromAddress = process.env.FROM_EMAIL || `"Billflow Security" <${process.env.SMTP_USER || 'security@billflow.io'}>`;
         const mailOptions = {

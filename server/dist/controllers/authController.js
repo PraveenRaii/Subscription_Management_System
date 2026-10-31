@@ -74,8 +74,10 @@ const register = async (req, res) => {
                 referralCode: `REF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
             });
         }
-        // Send OTP via Nodemailer
-        await (0, emailService_js_1.sendOtpEmail)(user.email, user.name, otp);
+        // Send OTP via Nodemailer in background (non-blocking, instant response)
+        (0, emailService_js_1.sendOtpEmail)(user.email, user.name, otp).catch((err) => {
+            console.error('[OTP Email Background Error]', err.message);
+        });
         await (0, auditLogger_js_1.logAudit)({
             user,
             action: 'OTP_SENT',
@@ -199,7 +201,10 @@ const resendOtp = async (req, res) => {
         user.verificationOtp = otp;
         user.verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
         await user.save();
-        await (0, emailService_js_1.sendOtpEmail)(user.email, user.name, otp);
+        // Send OTP via Nodemailer in background (non-blocking, instant response)
+        (0, emailService_js_1.sendOtpEmail)(user.email, user.name, otp).catch((err) => {
+            console.error('[Resend OTP Email Background Error]', err.message);
+        });
         res.json({
             success: true,
             message: `A new 6-digit verification code has been dispatched to ${user.email}.`,

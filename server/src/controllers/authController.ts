@@ -83,8 +83,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       });
     }
 
-    // Send OTP via Nodemailer
-    await sendOtpEmail(user.email, user.name, otp);
+    // Send OTP via Nodemailer in background (non-blocking, instant response)
+    sendOtpEmail(user.email, user.name, otp).catch((err) => {
+      console.error('[OTP Email Background Error]', err.message);
+    });
 
     await logAudit({
       user,
@@ -225,7 +227,10 @@ export const resendOtp = async (req: Request, res: Response): Promise<void> => {
     user.verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    await sendOtpEmail(user.email, user.name, otp);
+    // Send OTP via Nodemailer in background (non-blocking, instant response)
+    sendOtpEmail(user.email, user.name, otp).catch((err) => {
+      console.error('[Resend OTP Email Background Error]', err.message);
+    });
 
     res.json({
       success: true,
