@@ -143,7 +143,7 @@ export const StaffManagerPage: React.FC = () => {
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">Work Email</label>
                 <input
                   type="email"
-                  placeholder="vikram@subflow.io"
+                  placeholder="vikram@billflow.io"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

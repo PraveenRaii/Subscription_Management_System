@@ -39,7 +39,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const fetchNotifications = async () => {
-    const token = localStorage.getItem('subflow_token');
+    const token = localStorage.getItem('billflow_token') || localStorage.getItem('subflow_token');
     if (!token) return;
 
     try {
@@ -57,7 +57,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const markAsRead = async (id: string) => {
-    const token = localStorage.getItem('subflow_token');
+    const token = localStorage.getItem('billflow_token') || localStorage.getItem('subflow_token');
     try {
       await fetch(`/api/notifications/${id}/read`, {
         method: 'PUT',
@@ -73,7 +73,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const markAllAsRead = async () => {
-    const token = localStorage.getItem('subflow_token');
+    const token = localStorage.getItem('billflow_token') || localStorage.getItem('subflow_token');
     try {
       await fetch(`/api/notifications/read-all`, {
         method: 'PUT',

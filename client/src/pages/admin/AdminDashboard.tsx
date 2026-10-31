@@ -48,6 +48,7 @@ export const AdminDashboard: React.FC = () => {
   const [agingReport, setAgingReport] = useState<any>(null);
   const [topCustomers, setTopCustomers] = useState<any[]>([]);
   const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isRunningCycle, setIsRunningCycle] = useState(false);
   const [timePeriod, setTimePeriod] = useState('12m');
@@ -68,6 +69,12 @@ export const AdminDashboard: React.FC = () => {
       const invData: any = await api.get('/invoices?limit=5');
       if (invData.success) {
         setRecentInvoices(invData.invoices || []);
+      }
+
+      // Check pending subscription requests awaiting admin approval
+      const pendingRes: any = await api.get('/subscriptions?status=pending_approval');
+      if (pendingRes.success) {
+        setPendingApprovalsCount(pendingRes.subscriptions?.length || 0);
       }
     } catch (err: any) {
       showToast('Error loading analytics telemetry', 'error');
@@ -99,7 +106,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleExportCSV = () => {
     if (revenueGrowth.length > 0) {
-      exportToCSV('SubFlow_Revenue_Growth', revenueGrowth);
+      exportToCSV('Billflow_Revenue_Growth', revenueGrowth);
       showToast('Revenue Growth exported to CSV', 'info');
     }
   };
@@ -181,6 +188,29 @@ export const AdminDashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Pending Approvals Notice Banner */}
+      {pendingApprovalsCount > 0 && (
+        <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in shadow-xs">
+          <div className="flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-amber-500 animate-ping shrink-0" />
+            <div>
+              <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                {pendingApprovalsCount} Subscription Request{pendingApprovalsCount > 1 ? 's' : ''} Awaiting Admin Approval
+              </p>
+              <p className="text-[11px] text-amber-700/80 dark:text-amber-400">
+                Customers have requested plan activations that require your verification & authorization before billing begins.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/admin/subscriptions"
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs shrink-0 self-start sm:self-auto transition-all"
+          >
+            Review & Approve Requests →
+          </Link>
+        </div>
+      )}
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

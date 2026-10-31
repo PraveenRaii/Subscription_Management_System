@@ -41,7 +41,7 @@ const SubscriptionSchema = new mongoose_1.Schema({
     plan: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Plan', required: true, index: true },
     status: {
         type: String,
-        enum: ['active', 'paused', 'past_due', 'in_grace_period', 'cancelled', 'expired', 'trialing'],
+        enum: ['active', 'paused', 'past_due', 'in_grace_period', 'cancelled', 'expired', 'trialing', 'pending_approval'],
         default: 'active',
         index: true,
     },

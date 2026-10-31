@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const subscriptionController_js_1 = require("../controllers/subscriptionController.js");
 const auth_js_1 = require("../middleware/auth.js");
+const roleCheck_js_1 = require("../middleware/roleCheck.js");
 const router = (0, express_1.Router)();
 router.use(auth_js_1.authenticate);
 router.get('/', subscriptionController_js_1.getSubscriptions);
@@ -17,4 +18,6 @@ router.get('/:id/timeline', subscriptionController_js_1.getSubscriptionTimeline)
 router.post('/:id/cancel', subscriptionController_js_1.cancelSubscription);
 router.post('/:id/team-members', subscriptionController_js_1.addTeamMember);
 router.post('/:id/usage', subscriptionController_js_1.recordUsage);
+router.post('/:id/approve', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), subscriptionController_js_1.approveSubscription);
+router.post('/:id/reject', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), subscriptionController_js_1.rejectSubscription);
 exports.default = router;

@@ -101,7 +101,7 @@ export interface Subscription {
   subscriptionId: string;
   customer: Customer;
   plan: Plan;
-  status: 'active' | 'paused' | 'past_due' | 'in_grace_period' | 'cancelled' | 'expired' | 'trialing';
+  status: 'active' | 'paused' | 'past_due' | 'in_grace_period' | 'cancelled' | 'expired' | 'trialing' | 'pending_approval';
   billingFrequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   currency: 'INR' | 'USD' | 'EUR';
   quantity: number;

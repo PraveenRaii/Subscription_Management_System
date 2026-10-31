@@ -55,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
 
         <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>SubFlow Engine 2.0</span>
+          <span>Billflow Engine 2.0</span>
           <span className="text-zinc-400">/</span>
           <span className="text-orange-600 dark:text-orange-400 font-semibold uppercase tracking-wider">
             {user?.role === 'super_admin' ? 'Super Admin' : user?.role === 'staff' ? 'Staff Portal' : 'Customer Workspace'}

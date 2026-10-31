@@ -152,7 +152,7 @@ Return ONLY valid JSON without markdown fences.`;
     ],
     seasonalImpact: 'Expect an acceleration in Q4 enterprise procurement followed by steady renewal renewals in Q1.',
     executiveSummary:
-      'SubFlow 2.0 demonstrates consistent double-digit revenue expansion driven by mid-market adoption. Projected forward 6-month ARR run-rate approaches INR 2.4 Cr with strong margins. We recommend targeting enterprise tier conversions and automated usage overage tiering.',
+      'Billflow 2.0 demonstrates consistent double-digit revenue expansion driven by mid-market adoption. Projected forward 6-month ARR run-rate approaches INR 2.4 Cr with strong margins. We recommend targeting enterprise tier conversions and automated usage overage tiering.',
   };
 }
 
@@ -271,7 +271,7 @@ export async function chatWithAssistant(
   history: Array<{ role: 'user' | 'model'; parts: string }>,
   systemContext: any
 ) {
-  const systemInstruction = `You are the SubFlow 2.0 AI Business Intelligence & Financial Copilot.
+  const systemInstruction = `You are the Billflow 2.0 AI Business Intelligence & Financial Copilot.
 You have access to live aggregated SaaS telemetry data:
 - Current MRR: ${systemContext.mrr || 'INR 4,85,000'}
 - ARR: ${systemContext.arr || 'INR 58,20,000'}
@@ -296,7 +296,7 @@ Guidelines:
   // Realistic Context-Aware Fallback
   const q = userMessage.toLowerCase();
   if (q.includes('mrr') || q.includes('revenue') || q.includes('arr')) {
-    return `### **SubFlow 2.0 Financial Performance Summary**
+    return `### **Billflow 2.0 Financial Performance Summary**
 
 - **Monthly Recurring Revenue (MRR):** **INR 4,85,000** (+12.4% MoM)
 - **Annual Run Rate (ARR):** **INR 58,20,000**
@@ -335,11 +335,11 @@ Guidelines:
 - **Failed Payments in Queue:** 3 transactions currently undergoing automated Razorpay retry logic.
 
 *Automated Mitigation:*
-- SubFlow 2.0 has dispatched automated payment reminder emails at **T-3 days** and **T+1 day** past due date.
+- Billflow 2.0 has dispatched automated payment reminder emails at **T-3 days** and **T+1 day** past due date.
 - Grace period is enforced for 7 days before subscription auto-suspension.`;
   }
 
-  return `### **SubFlow 2.0 Business Intelligence Copilot**
+  return `### **Billflow 2.0 Business Intelligence Copilot**
 
 I have analyzed your live subscription telemetry. Here is a high-level briefing:
 - **Active Subscriptions:** **142** across India, USA, and Europe

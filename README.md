@@ -1,4 +1,4 @@
-# 🚀 SubFlow 2.0 — AI-Powered SaaS Subscription & Revenue Intelligence Platform
+# 🚀 Billflow 2.0 — AI-Powered SaaS Subscription & Revenue Intelligence Platform
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg)](https://react.dev/)

@@ -171,7 +171,7 @@ export const CustomerInvoicesPage: React.FC = () => {
             <form onSubmit={handleApplyCoupon} className="space-y-4">
               <input
                 type="text"
-                placeholder="e.g. SUBFLOW20"
+                placeholder="e.g. BILLFLOW20"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                 required

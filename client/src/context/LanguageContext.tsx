@@ -125,13 +125,13 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('subflow_lang');
+    const saved = localStorage.getItem('billflow_lang') || localStorage.getItem('subflow_lang');
     return (saved as Language) || 'en';
   });
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('subflow_lang', lang);
+    localStorage.setItem('billflow_lang', lang);
   };
 
   const t = (key: string): string => {

@@ -89,7 +89,7 @@ export const PaymentManagerPage: React.FC = () => {
         Status: p.status,
         Date: new Date(p.createdAt).toLocaleDateString(),
       }));
-      exportToCSV('SubFlow_Payments', rows);
+      exportToCSV('Billflow_Payments', rows);
       showToast('Payments exported to CSV', 'info');
     }
   };

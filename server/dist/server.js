@@ -7,6 +7,8 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
 const db_js_1 = require("./config/db.js");
 const index_js_1 = __importDefault(require("./routes/index.js"));
 const errorHandler_js_1 = require("./middleware/errorHandler.js");
@@ -32,15 +34,32 @@ app.use('/api', rateLimiter_js_1.apiLimiter);
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'healthy',
-        name: 'SubFlow 2.0 API',
+        name: 'Billflow 2.0 API',
         uptime: process.uptime(),
         timestamp: new Date().toISOString(),
         version: '2.0.0',
         theme: 'orange',
     });
 });
-// Mount Routes
+// Mount API Routes
 app.use('/api', index_js_1.default);
+// Serve Frontend Static Files in Production (Full-Stack Render Deploy)
+const clientDistPath = path_1.default.resolve(process.cwd(), '../client/dist');
+const altClientDistPath = path_1.default.resolve(process.cwd(), 'client/dist');
+const activeDist = fs_1.default.existsSync(clientDistPath)
+    ? clientDistPath
+    : fs_1.default.existsSync(altClientDistPath)
+        ? altClientDistPath
+        : null;
+if (activeDist) {
+    app.use(express_1.default.static(activeDist));
+    app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api')) {
+            return next();
+        }
+        res.sendFile(path_1.default.join(activeDist, 'index.html'));
+    });
+}
 // Error Handling Middleware
 app.use(errorHandler_js_1.errorHandler);
 // Start Server
@@ -49,7 +68,7 @@ async function startServer() {
     (0, billingScheduler_js_1.initBillingScheduler)();
     app.listen(PORT, () => {
         console.log(`\n======================================================`);
-        console.log(`🚀 SubFlow 2.0 Backend Server Running on Port ${PORT}`);
+        console.log(`🚀 Billflow 2.0 Backend Server Running on Port ${PORT}`);
         console.log(`📡 API Health: http://localhost:${PORT}/api/health`);
         console.log(`🎨 UI Accent: Orange (#f97316)`);
         console.log(`======================================================\n`);

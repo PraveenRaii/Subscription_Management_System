@@ -9,7 +9,7 @@ export const AiAssistantWidget: React.FC = () => {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([
     {
       role: 'assistant',
-      text: 'Hello! I am your SubFlow 2.0 AI Business Intelligence & Financial Copilot. Ask me anything about MRR, churn forecasting, payment collections, or retention strategies.',
+      text: 'Hello! I am your Billflow 2.0 AI Business Intelligence & Financial Copilot. Ask me anything about MRR, churn forecasting, payment collections, or retention strategies.',
     },
   ]);
 
@@ -86,7 +86,7 @@ export const AiAssistantWidget: React.FC = () => {
               </div>
               <div>
                 <h4 className="font-bold text-sm leading-tight flex items-center gap-1.5">
-                  SubFlow AI Copilot
+                  Billflow AI Copilot
                   <span className="text-[10px] bg-white/25 px-1.5 py-0.5 rounded-full font-semibold">Gemini</span>
                 </h4>
                 <p className="text-[11px] text-orange-100 flex items-center gap-1">
@@ -167,7 +167,7 @@ export const AiAssistantWidget: React.FC = () => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask SubFlow AI Copilot..."
+              placeholder="Ask Billflow AI Copilot..."
               className="flex-1 px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-orange-500"
             />
             <button

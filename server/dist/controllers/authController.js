@@ -74,8 +74,10 @@ const register = async (req, res) => {
                 referralCode: `REF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
             });
         }
-        // Send OTP via Nodemailer
-        await (0, emailService_js_1.sendOtpEmail)(user.email, user.name, otp);
+        // Send OTP via Nodemailer in background (non-blocking, instant response)
+        (0, emailService_js_1.sendOtpEmail)(user.email, user.name, otp).catch((err) => {
+            console.error('[OTP Email Background Error]', err.message);
+        });
         await (0, auditLogger_js_1.logAudit)({
             user,
             action: 'OTP_SENT',
@@ -88,7 +90,6 @@ const register = async (req, res) => {
             success: true,
             requiresOtp: true,
             email: user.email,
-            devOtp: otp, // surfaced for immediate ease during evaluation/demo
             message: `A 6-digit verification code has been dispatched to ${user.email}. Enter it to complete activation.`,
         });
     }
@@ -153,7 +154,7 @@ const verifyOtp = async (req, res) => {
         const token = generateToken(user._id.toString(), user.role);
         res.status(200).json({
             success: true,
-            message: 'Email verified successfully! Welcome to SubFlow 2.0.',
+            message: 'Email verified successfully! Welcome to Billflow 2.0.',
             token,
             user: {
                 id: user._id,
@@ -200,11 +201,13 @@ const resendOtp = async (req, res) => {
         user.verificationOtp = otp;
         user.verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
         await user.save();
-        await (0, emailService_js_1.sendOtpEmail)(user.email, user.name, otp);
+        // Send OTP via Nodemailer in background (non-blocking, instant response)
+        (0, emailService_js_1.sendOtpEmail)(user.email, user.name, otp).catch((err) => {
+            console.error('[Resend OTP Email Background Error]', err.message);
+        });
         res.json({
             success: true,
             message: `A new 6-digit verification code has been dispatched to ${user.email}.`,
-            devOtp: otp,
         });
     }
     catch (err) {

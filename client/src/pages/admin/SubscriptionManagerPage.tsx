@@ -135,6 +135,28 @@ export const SubscriptionManagerPage: React.FC = () => {
     }
   };
 
+  const handleApprove = async (id: string, subId: string) => {
+    try {
+      const res: any = await api.post(`/subscriptions/${id}/approve`);
+      showToast(res.message || `Subscription ${subId} approved and activated!`, 'success');
+      fetchSubscriptions();
+    } catch (err: any) {
+      showToast(err.message || 'Approval failed', 'error');
+    }
+  };
+
+  const handleReject = async (id: string, subId: string) => {
+    const reason = window.prompt(`Enter reason for declining ${subId}:`, 'Account details not verified');
+    if (reason === null) return;
+    try {
+      const res: any = await api.post(`/subscriptions/${id}/reject`, { reason });
+      showToast(res.message || `Subscription ${subId} rejected`, 'info');
+      fetchSubscriptions();
+    } catch (err: any) {
+      showToast(err.message || 'Reject failed', 'error');
+    }
+  };
+
   const fetchProrationPreview = async (planId: string, sub?: Subscription) => {
     const activeSub = sub || selectedSub;
     if (!activeSub || !planId) return;
@@ -272,17 +294,18 @@ export const SubscriptionManagerPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
-          {['all', 'active', 'paused', 'past_due', 'cancelled'].map((st) => (
+          {['all', 'pending_approval', 'active', 'paused', 'past_due', 'cancelled'].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors flex items-center gap-1.5 shrink-0 ${
                 statusFilter === st
                   ? 'bg-orange-500 text-white shadow-xs'
                   : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
               }`}
             >
-              {st.replace('_', ' ')}
+              {st === 'pending_approval' && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
+              {st === 'pending_approval' ? 'Pending Approval' : st.replace('_', ' ')}
             </button>
           ))}
         </div>
@@ -341,6 +364,8 @@ export const SubscriptionManagerPage: React.FC = () => {
                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           sub.status === 'active'
                             ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                            : sub.status === 'pending_approval'
+                            ? 'bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] animate-pulse'
                             : sub.status === 'paused'
                             ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
                             : sub.status === 'past_due'
@@ -348,11 +373,33 @@ export const SubscriptionManagerPage: React.FC = () => {
                             : 'bg-zinc-500/10 text-zinc-400'
                         }`}
                       >
-                        {sub.status.toUpperCase()}
+                        {sub.status === 'pending_approval' ? 'PENDING APPROVAL' : sub.status.toUpperCase()}
                       </span>
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        {/* Approval Controls for Pending Requests */}
+                        {sub.status === 'pending_approval' && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(sub._id, sub.subscriptionId)}
+                              title="Approve Subscription"
+                              className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[11px] shadow-xs flex items-center gap-1 transition-all mr-1"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              <span>Approve</span>
+                            </button>
+                            <button
+                              onClick={() => handleReject(sub._id, sub.subscriptionId)}
+                              title="Reject Request"
+                              className="px-2 py-1 rounded-lg border border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 text-[11px] font-semibold transition-all mr-1"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              <span>Reject</span>
+                            </button>
+                          </>
+                        )}
+
                         {sub.status === 'active' ? (
                           <button
                             onClick={() => handlePause(sub._id)}
@@ -371,13 +418,15 @@ export const SubscriptionManagerPage: React.FC = () => {
                           </button>
                         ) : null}
 
-                        <button
-                          onClick={() => handleRenew(sub._id)}
-                          title="Renew Now"
-                          className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-orange-500"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                        </button>
+                        {sub.status !== 'pending_approval' && (
+                          <button
+                            onClick={() => handleRenew(sub._id)}
+                            title="Renew Now"
+                            className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-orange-500"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          </button>
+                        )}
 
                         <button
                           onClick={() => {

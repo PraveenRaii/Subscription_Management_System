@@ -26,14 +26,14 @@ const SYMBOLS: Record<Currency, string> = {
 
 export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currency, setCurrencyState] = useState<Currency>(() => {
-    const saved = localStorage.getItem('subflow_currency');
+    const saved = localStorage.getItem('billflow_currency') || localStorage.getItem('subflow_currency');
     if (saved === 'INR' || saved === 'USD' || saved === 'EUR') return saved;
     return 'INR';
   });
 
   const setCurrency = (c: Currency) => {
     setCurrencyState(c);
-    localStorage.setItem('subflow_currency', c);
+    localStorage.setItem('billflow_currency', c);
   };
 
   const convertAmount = (amount: number, fromCurrency: Currency = 'INR'): number => {

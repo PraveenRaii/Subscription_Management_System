@@ -12,8 +12,11 @@ import {
   addTeamMember,
   recordUsage,
   getSubscriptionTimeline,
+  approveSubscription,
+  rejectSubscription,
 } from '../controllers/subscriptionController.js';
 import { authenticate } from '../middleware/auth.js';
+import { authorize } from '../middleware/roleCheck.js';
 
 const router = Router();
 
@@ -31,5 +34,7 @@ router.get('/:id/timeline', getSubscriptionTimeline);
 router.post('/:id/cancel', cancelSubscription);
 router.post('/:id/team-members', addTeamMember);
 router.post('/:id/usage', recordUsage);
+router.post('/:id/approve', authorize('super_admin', 'staff'), approveSubscription);
+router.post('/:id/reject', authorize('super_admin', 'staff'), rejectSubscription);
 
 export default router;

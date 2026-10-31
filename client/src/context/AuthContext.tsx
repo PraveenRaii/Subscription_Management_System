@@ -22,9 +22,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('subflow_token');
-    const savedUser = localStorage.getItem('subflow_user');
-    const savedCustomer = localStorage.getItem('subflow_customer');
+    const savedToken = localStorage.getItem('billflow_token') || localStorage.getItem('subflow_token');
+    const savedUser = localStorage.getItem('billflow_user') || localStorage.getItem('subflow_user');
+    const savedCustomer = localStorage.getItem('billflow_customer') || localStorage.getItem('subflow_customer');
 
     if (savedToken && savedUser) {
       try {
@@ -43,14 +43,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = (newToken: string, newUser: User, newCustomer?: Customer | null) => {
     setToken(newToken);
     setUser(newUser);
-    localStorage.setItem('subflow_token', newToken);
-    localStorage.setItem('subflow_user', JSON.stringify(newUser));
+    localStorage.setItem('billflow_token', newToken);
+    localStorage.setItem('billflow_user', JSON.stringify(newUser));
 
     if (newCustomer) {
       setCustomer(newCustomer);
-      localStorage.setItem('subflow_customer', JSON.stringify(newCustomer));
+      localStorage.setItem('billflow_customer', JSON.stringify(newCustomer));
     } else {
       setCustomer(null);
+      localStorage.removeItem('billflow_customer');
       localStorage.removeItem('subflow_customer');
     }
   };
@@ -59,6 +60,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     setUser(null);
     setCustomer(null);
+    localStorage.removeItem('billflow_token');
+    localStorage.removeItem('billflow_user');
+    localStorage.removeItem('billflow_customer');
     localStorage.removeItem('subflow_token');
     localStorage.removeItem('subflow_user');
     localStorage.removeItem('subflow_customer');
@@ -68,14 +72,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
     const updated = { ...user, ...updatedFields };
     setUser(updated);
-    localStorage.setItem('subflow_user', JSON.stringify(updated));
+    localStorage.setItem('billflow_user', JSON.stringify(updated));
   };
 
   const updateCustomerData = (updatedFields: Partial<Customer>) => {
     if (!customer) return;
     const updated = { ...customer, ...updatedFields } as Customer;
     setCustomer(updated);
-    localStorage.setItem('subflow_customer', JSON.stringify(updated));
+    localStorage.setItem('billflow_customer', JSON.stringify(updated));
   };
 
   return (
