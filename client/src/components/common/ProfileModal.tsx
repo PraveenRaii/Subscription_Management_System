@@ -169,8 +169,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden transition-all">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 bg-black/60 backdrop-blur-xs animate-fade-in sm:p-4">
+      <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-3xl border border-zinc-200 bg-white shadow-2xl transition-all dark:border-zinc-800 dark:bg-zinc-900 sm:max-h-[calc(100dvh-2rem)]">
         {/* Header Banner */}
         <div className="relative p-6 bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <div className="flex items-center gap-3">

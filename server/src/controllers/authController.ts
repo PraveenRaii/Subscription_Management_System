@@ -10,15 +10,15 @@ import { sendWelcomeEmail, sendPasswordResetEmail, sendOtpEmail } from '../servi
 import { AuthRequest } from '../middleware/auth.js';
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'durfn3vvo',
-  api_key: process.env.CLOUDINARY_API_KEY || '228161363588349',
-  api_secret: process.env.CLOUDINARY_API_SECRET || '1mJm_UrApEjuv14AlEbUHnYIopw',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
+  api_key: process.env.CLOUDINARY_API_KEY || '',
+  api_secret: process.env.CLOUDINARY_API_SECRET || '',
 });
 
 const generateToken = (id: string, role: string) => {
   return jwt.sign(
     { id, role },
-    process.env.JWT_SECRET || 'super_secret_jwt_subflow_2026',
+    process.env.JWT_SECRET || (() => { throw new Error('JWT_SECRET is required.'); })(),
     { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any }
   );
 };
@@ -42,7 +42,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     let user = await User.findOne({ email: normalizedEmail });
 
     // Generate 6-digit numeric OTP code
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     if (user) {
@@ -322,80 +322,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 // Google OAuth Login
 export const googleLogin = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { email, name, googleId, avatar } = req.body;
-
-    if (!email) {
-      res.status(400).json({ success: false, message: 'Google account email is required.' });
-      return;
-    }
-
-    let user = await User.findOne({ email: email.toLowerCase() });
-
-    if (!user) {
-      user = await User.create({
-        name: name || email.split('@')[0],
-        email: email.toLowerCase(),
-        googleId: googleId || `goog_${Date.now()}`,
-        avatar: avatar || '',
-        role: 'customer',
-        isEmailVerified: true,
-      });
-
-      const customerId = `CUST-${Math.floor(1000 + Math.random() * 9000)}`;
-      await Customer.create({
-        user: user._id,
-        customerId,
-        companyName: `${user.name}'s Organization`,
-        currency: 'INR',
-        referralCode: `REF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-      });
-
-      await sendWelcomeEmail(user.email, user.name, user.role);
-    } else {
-      if (googleId && !user.googleId) {
-        user.googleId = googleId;
-      }
-      if (avatar && !user.avatar) {
-        user.avatar = avatar;
-      }
-      user.lastLogin = new Date();
-      user.loginCount += 1;
-      await user.save();
-    }
-
-    let customerData = null;
-    if (user.role === 'customer') {
-      customerData = await Customer.findOne({ user: user._id });
-    }
-
-    await logAudit({
-      user,
-      action: 'GOOGLE_LOGIN_SUCCESS',
-      entity: 'User',
-      entityId: user._id.toString(),
-      details: { role: user.role },
-      req,
-    });
-
-    const token = generateToken(user._id.toString(), user.role);
-
-    res.json({
-      success: true,
-      message: 'Google login successful.',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-      },
-      customer: customerData,
-    });
-  } catch (err: any) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  res.status(501).json({ success: false, message: 'Google sign-in is not configured. Use email and password.' });
 };
 
 // Forgot Password
@@ -440,7 +367,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     res.json({
       success: true,
       message: 'Password reset instructions have been sent to your email address.',
-      demoResetUrl: resetUrl, // Helpful for local sandbox/testing
+      ...(process.env.NODE_ENV !== 'production' ? { demoResetUrl: resetUrl } : {}),
     });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -514,7 +441,15 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
 
     res.json({
       success: true,
-      user: req.user,
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        avatar: req.user.avatar,
+        phoneNumber: req.user.phoneNumber,
+        status: req.user.status,
+      },
       customer,
       staff,
     });
@@ -595,7 +530,7 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
 
     if (name) user.name = name;
     if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
-    if (avatar) user.avatar = avatar;
+    if (avatar !== undefined) user.avatar = avatar;
     await user.save();
 
     if (user.role === 'customer') {

@@ -12,7 +12,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', authorize('super_admin', 'staff'), getCustomers);
-router.get('/:id', getCustomerById);
-router.put('/:id', updateCustomer);
+router.get('/:id', authorize('super_admin', 'staff'), getCustomerById);
+router.put('/:id', authorize('super_admin', 'staff'), updateCustomer);
 
 export default router;

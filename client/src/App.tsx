@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -12,35 +12,35 @@ import { PortalLayout } from './components/layout/PortalLayout';
 import { AiAssistantWidget } from './components/common/AiAssistantWidget';
 
 // Public & Auth Pages
-import { LandingPage } from './pages/LandingPage';
-import { LoginPage } from './pages/auth/LoginPage';
-import { RegisterPage } from './pages/auth/RegisterPage';
-import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
-import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+const LandingPage = lazy(() => import('./pages/LandingPage').then((module) => ({ default: module.LandingPage })));
+const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage').then((module) => ({ default: module.RegisterPage })));
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage').then((module) => ({ default: module.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage').then((module) => ({ default: module.ResetPasswordPage })));
 
 // Admin Pages
-import { AdminDashboard } from './pages/admin/AdminDashboard';
-import { SubscriptionManagerPage } from './pages/admin/SubscriptionManagerPage';
-import { InvoiceManagerPage } from './pages/admin/InvoiceManagerPage';
-import { PaymentManagerPage } from './pages/admin/PaymentManagerPage';
-import { ProductPlanManagerPage } from './pages/admin/ProductPlanManagerPage';
-import { AiIntelligencePage } from './pages/admin/AiIntelligencePage';
-import { CustomerManagerPage } from './pages/admin/CustomerManagerPage';
-import { QuotationManagerPage } from './pages/admin/QuotationManagerPage';
-import { CouponManagerPage } from './pages/admin/CouponManagerPage';
-import { RenewalCalendarPage } from './pages/admin/RenewalCalendarPage';
-import { StaffManagerPage } from './pages/admin/StaffManagerPage';
-import { AuditLogPage } from './pages/admin/AuditLogPage';
-import { WebhookManagerPage } from './pages/admin/WebhookManagerPage';
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then((module) => ({ default: module.AdminDashboard })));
+const SubscriptionManagerPage = lazy(() => import('./pages/admin/SubscriptionManagerPage').then((module) => ({ default: module.SubscriptionManagerPage })));
+const InvoiceManagerPage = lazy(() => import('./pages/admin/InvoiceManagerPage').then((module) => ({ default: module.InvoiceManagerPage })));
+const PaymentManagerPage = lazy(() => import('./pages/admin/PaymentManagerPage').then((module) => ({ default: module.PaymentManagerPage })));
+const ProductPlanManagerPage = lazy(() => import('./pages/admin/ProductPlanManagerPage').then((module) => ({ default: module.ProductPlanManagerPage })));
+const AiIntelligencePage = lazy(() => import('./pages/admin/AiIntelligencePage').then((module) => ({ default: module.AiIntelligencePage })));
+const CustomerManagerPage = lazy(() => import('./pages/admin/CustomerManagerPage').then((module) => ({ default: module.CustomerManagerPage })));
+const QuotationManagerPage = lazy(() => import('./pages/admin/QuotationManagerPage').then((module) => ({ default: module.QuotationManagerPage })));
+const CouponManagerPage = lazy(() => import('./pages/admin/CouponManagerPage').then((module) => ({ default: module.CouponManagerPage })));
+const RenewalCalendarPage = lazy(() => import('./pages/admin/RenewalCalendarPage').then((module) => ({ default: module.RenewalCalendarPage })));
+const StaffManagerPage = lazy(() => import('./pages/admin/StaffManagerPage').then((module) => ({ default: module.StaffManagerPage })));
+const AuditLogPage = lazy(() => import('./pages/admin/AuditLogPage').then((module) => ({ default: module.AuditLogPage })));
+const WebhookManagerPage = lazy(() => import('./pages/admin/WebhookManagerPage').then((module) => ({ default: module.WebhookManagerPage })));
 
 // Portal Pages
-import { CustomerSubscriptionsPage } from './pages/portal/CustomerSubscriptionsPage';
-import { CustomerInvoicesPage } from './pages/portal/CustomerInvoicesPage';
-import { CustomerUsagePage } from './pages/portal/CustomerUsagePage';
-import { CustomerTeamPage } from './pages/portal/CustomerTeamPage';
-import { CustomerAiAssistantPage } from './pages/portal/CustomerAiAssistantPage';
-import { CustomerReferralPage } from './pages/portal/CustomerReferralPage';
-import { CustomerSettingsPage } from './pages/portal/CustomerSettingsPage';
+const CustomerSubscriptionsPage = lazy(() => import('./pages/portal/CustomerSubscriptionsPage').then((module) => ({ default: module.CustomerSubscriptionsPage })));
+const CustomerInvoicesPage = lazy(() => import('./pages/portal/CustomerInvoicesPage').then((module) => ({ default: module.CustomerInvoicesPage })));
+const CustomerUsagePage = lazy(() => import('./pages/portal/CustomerUsagePage').then((module) => ({ default: module.CustomerUsagePage })));
+const CustomerTeamPage = lazy(() => import('./pages/portal/CustomerTeamPage').then((module) => ({ default: module.CustomerTeamPage })));
+const CustomerAiAssistantPage = lazy(() => import('./pages/portal/CustomerAiAssistantPage').then((module) => ({ default: module.CustomerAiAssistantPage })));
+const CustomerReferralPage = lazy(() => import('./pages/portal/CustomerReferralPage').then((module) => ({ default: module.CustomerReferralPage })));
+const CustomerSettingsPage = lazy(() => import('./pages/portal/CustomerSettingsPage').then((module) => ({ default: module.CustomerSettingsPage })));
 
 // Route Guards
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -73,6 +73,7 @@ export const App: React.FC = () => {
           <AuthProvider>
             <NotificationProvider>
               <BrowserRouter>
+                <Suspense fallback={<div className="min-h-[40vh] p-8 text-center text-xs text-zinc-500">Loading page…</div>}>
                 <Routes>
                   {/* Public Landing & Auth */}
                   <Route path="/" element={<LandingPage />} />
@@ -147,6 +148,7 @@ export const App: React.FC = () => {
                   {/* Catch-all fallback */}
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                </Suspense>
 
                 {/* Floating AI Intelligence Assistant on all screens */}
                 <AiAssistantWidget />

@@ -10,7 +10,7 @@ router.post('/register', rateLimiter_js_1.authLimiter, authController_js_1.regis
 router.post('/verify-otp', rateLimiter_js_1.authLimiter, authController_js_1.verifyOtp);
 router.post('/resend-otp', rateLimiter_js_1.authLimiter, authController_js_1.resendOtp);
 router.post('/login', rateLimiter_js_1.authLimiter, authController_js_1.login);
-router.post('/google', authController_js_1.googleLogin);
+router.post('/google', rateLimiter_js_1.authLimiter, authController_js_1.googleLogin);
 router.post('/forgot-password', rateLimiter_js_1.authLimiter, authController_js_1.forgotPassword);
 router.post('/reset-password', rateLimiter_js_1.authLimiter, authController_js_1.resetPassword);
 router.get('/me', auth_js_1.authenticate, authController_js_1.getMe);

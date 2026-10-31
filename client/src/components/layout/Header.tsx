@@ -118,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl z-50 p-3 animate-fade-in">
+            <div className="absolute right-0 z-50 mt-2 w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl animate-fade-in dark:border-zinc-800 dark:bg-zinc-900 sm:w-96 sm:max-w-[calc(100vw-2rem)]">
               <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm text-zinc-900 dark:text-white">Notifications</span>

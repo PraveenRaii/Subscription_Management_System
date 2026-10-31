@@ -3,16 +3,14 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_subflow_demo9928';
-const keySecret = process.env.RAZORPAY_KEY_SECRET || 'secret_subflow_test_887711';
-const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || 'whsec_subflow_orange_webhook_key';
+const keyId = process.env.RAZORPAY_KEY_ID || '';
+const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
+const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
+const simulationAllowed = process.env.NODE_ENV !== 'production';
 
 let razorpayInstance: any = null;
 try {
-  razorpayInstance = new Razorpay({
-    key_id: keyId,
-    key_secret: keySecret,
-  });
+  if (keyId && keySecret) razorpayInstance = new Razorpay({ key_id: keyId, key_secret: keySecret });
 } catch (err: any) {
   console.warn('Razorpay initialization note:', err.message);
 }
@@ -27,7 +25,7 @@ export interface CreateOrderParams {
 export async function createRazorpayOrder(params: CreateOrderParams) {
   const amountInSubunits = Math.round(params.amount * 100); // Paisa / Cents
 
-  if (razorpayInstance && !keyId.includes('demo') && !keySecret.includes('test_887711')) {
+  if (razorpayInstance) {
     try {
       const order = await razorpayInstance.orders.create({
         amount: amountInSubunits,
@@ -44,9 +42,11 @@ export async function createRazorpayOrder(params: CreateOrderParams) {
         isSimulated: false,
       };
     } catch (err: any) {
-      console.warn('Real Razorpay API error, falling back to Sandbox Simulation mode:', err.message);
+      throw new Error('Unable to create Razorpay order. Please try again.');
     }
   }
+
+  if (!simulationAllowed) throw new Error('Razorpay is not configured.');
 
   // Robust test/sandbox simulation order:
   const simOrderId = `order_sim_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -62,9 +62,10 @@ export async function createRazorpayOrder(params: CreateOrderParams) {
 
 export function verifyPaymentSignature(orderId: string, paymentId: string, signature: string): boolean {
   if (orderId.startsWith('order_sim_')) {
-    // In simulated sandbox mode, valid when paymentId is provided
-    return paymentId.length > 5;
+    return simulationAllowed && paymentId.startsWith('pay_sim_') && signature.startsWith('sig_sim_');
   }
+
+  if (!keySecret || !signature) return false;
 
   try {
     const generatedSignature = crypto
@@ -72,7 +73,9 @@ export function verifyPaymentSignature(orderId: string, paymentId: string, signa
       .update(`${orderId}|${paymentId}`)
       .digest('hex');
 
-    return generatedSignature === signature;
+    const expected = Buffer.from(generatedSignature, 'hex');
+    const received = Buffer.from(signature, 'hex');
+    return expected.length === received.length && crypto.timingSafeEqual(expected, received);
   } catch (err) {
     return false;
   }
@@ -80,12 +83,15 @@ export function verifyPaymentSignature(orderId: string, paymentId: string, signa
 
 export function verifyWebhookSignature(body: string, signature: string): boolean {
   try {
+    if (!webhookSecret || !signature) return false;
     const expectedSignature = crypto
       .createHmac('sha256', webhookSecret)
       .update(body)
       .digest('hex');
 
-    return expectedSignature === signature;
+    const expected = Buffer.from(expectedSignature, 'hex');
+    const received = Buffer.from(signature, 'hex');
+    return expected.length === received.length && crypto.timingSafeEqual(expected, received);
   } catch (err) {
     return false;
   }
@@ -94,7 +100,12 @@ export function verifyWebhookSignature(body: string, signature: string): boolean
 export async function initiateRefund(paymentId: string, amount: number, notes?: Record<string, any>) {
   const amountInSubunits = Math.round(amount * 100);
 
-  if (razorpayInstance && !paymentId.startsWith('pay_sim_')) {
+  if (paymentId.startsWith('pay_sim_')) {
+    if (!simulationAllowed) throw new Error('Simulated refunds are disabled in production.');
+    return { success: true, refundId: `rfnd_sim_${Date.now()}`, amount, status: 'processed' };
+  }
+
+  if (razorpayInstance) {
     try {
       const refund = await razorpayInstance.payments.refund(paymentId, {
         amount: amountInSubunits,
@@ -107,15 +118,8 @@ export async function initiateRefund(paymentId: string, amount: number, notes?: 
         status: refund.status,
       };
     } catch (err: any) {
-      console.warn('Razorpay live refund failed, proceeding with recorded refund:', err.message);
+      throw new Error('Razorpay refund failed. The refund was not recorded.');
     }
   }
-
-  // Simulated refund
-  return {
-    success: true,
-    refundId: `rfnd_sim_${Date.now()}`,
-    amount: amount,
-    status: 'processed',
-  };
+  throw new Error('Razorpay is not configured; refund was not processed.');
 }

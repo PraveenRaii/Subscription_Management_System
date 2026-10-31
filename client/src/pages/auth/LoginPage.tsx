@@ -48,21 +48,7 @@ export const LoginPage: React.FC = () => {
   };
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    try {
-      const res: any = await api.post('/auth/google', {
-        email: 'alex.google@enterprise.com',
-        name: 'Alex Sterling (Google)',
-        googleId: 'g_auth_99182',
-      });
-      login(res.token, res.user, res.customer);
-      showToast('Signed in via Google successfully.', 'success');
-      navigate('/portal');
-    } catch (err: any) {
-      showToast(err.message, 'error');
-    } finally {
-      setIsLoading(false);
-    }
+    showToast('Google sign-in is not configured. Please use email and password.', 'info');
   };
 
   return (

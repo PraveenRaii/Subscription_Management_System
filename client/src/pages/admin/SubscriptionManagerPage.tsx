@@ -492,7 +492,7 @@ export const SubscriptionManagerPage: React.FC = () => {
 
       {/* Modal 1: Create Subscription */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-3 bg-zinc-950/70 backdrop-blur-sm animate-fade-in sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 relative">
             <button
               onClick={() => setShowCreateModal(false)}
@@ -566,7 +566,7 @@ export const SubscriptionManagerPage: React.FC = () => {
 
       {/* Modal 2: Change Plan (Upgrade / Downgrade) */}
       {showChangePlanModal && selectedSub && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-3 bg-zinc-950/70 backdrop-blur-sm animate-fade-in sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 relative">
             <button
               onClick={() => setShowChangePlanModal(false)}
@@ -678,7 +678,7 @@ export const SubscriptionManagerPage: React.FC = () => {
 
       {/* Modal 3: Team Seats */}
       {showTeamModal && selectedSub && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-3 bg-zinc-950/70 backdrop-blur-sm animate-fade-in sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 relative">
             <button
               onClick={() => setShowTeamModal(false)}
@@ -736,7 +736,7 @@ export const SubscriptionManagerPage: React.FC = () => {
 
       {/* Modal 4: Record Usage */}
       {showUsageModal && selectedSub && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-3 bg-zinc-950/70 backdrop-blur-sm animate-fade-in sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 relative">
             <button
               onClick={() => setShowUsageModal(false)}
@@ -785,7 +785,7 @@ export const SubscriptionManagerPage: React.FC = () => {
       )}
       {/* Modal 5: Activity Timeline */}
       {showTimelineModal && selectedSub && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-3 bg-zinc-950/70 backdrop-blur-sm animate-fade-in sm:items-center sm:p-4">
           <div className="w-full max-w-lg rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 relative max-h-[85vh] flex flex-col">
             <button
               onClick={() => setShowTimelineModal(false)}

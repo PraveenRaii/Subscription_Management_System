@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Send, X, Sparkles, User, Minimize2, Maximize2 } from 'lucide-react';
+import { Bot, Send, X, Sparkles } from 'lucide-react';
 import { api } from '../../services/api';
 
 export const AiAssistantWidget: React.FC = () => {
@@ -65,27 +65,33 @@ export const AiAssistantWidget: React.FC = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs shadow-xl shadow-orange-500/30 hover:scale-105 transition-all group"
+          aria-label="Open AI assistant"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2 px-3 sm:px-4 py-3 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-[11px] sm:text-xs shadow-xl shadow-orange-500/30 hover:scale-105 transition-all group"
         >
           <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
             <Bot className="w-3.5 h-3.5" />
           </div>
-          <span>AI Intelligence Assistant</span>
+          <span>AI Assistant</span>
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
         </button>
       )}
 
       {/* Floating Chat Drawer / Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-full sm:w-[420px] h-[560px] max-h-[85vh] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl flex flex-col overflow-hidden animate-fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Billflow AI Copilot"
+          className="fixed inset-0 z-50 flex h-[100dvh] w-full flex-col overflow-hidden border-0 bg-white shadow-2xl animate-fade-in dark:bg-zinc-900 sm:inset-auto sm:bottom-6 sm:right-6 sm:h-[560px] sm:max-h-[85vh] sm:w-[420px] sm:rounded-3xl sm:border sm:border-zinc-200 sm:dark:border-zinc-800"
+        >
           {/* Header */}
-          <div className="p-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-between bg-gradient-to-r from-orange-500 to-amber-500 p-4 pt-[calc(env(safe-area-inset-top)+1rem)] text-white sm:pt-4">
+            <div className="flex min-w-0 items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
                 <Bot className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-bold text-sm leading-tight flex items-center gap-1.5">
+                <h4 className="flex min-w-0 flex-wrap items-center gap-1.5 font-bold text-sm leading-tight">
                   Billflow AI Copilot
                   <span className="text-[10px] bg-white/25 px-1.5 py-0.5 rounded-full font-semibold">Gemini</span>
                 </h4>
@@ -103,13 +109,13 @@ export const AiAssistantWidget: React.FC = () => {
           </div>
 
           {/* Quick Prompts */}
-          <div className="px-3 py-2 bg-orange-50/50 dark:bg-orange-950/20 border-b border-orange-100 dark:border-orange-900/30 flex items-center gap-1.5 overflow-x-auto scrollbar-none text-[11px]">
-            <Sparkles className="w-3 h-3 text-orange-500 shrink-0" />
+          <div className="flex max-h-28 flex-wrap items-center gap-1.5 overflow-y-auto border-b border-orange-100 bg-orange-50/50 px-3 py-2 text-[11px] dark:border-orange-900/30 dark:bg-orange-950/20 sm:max-h-none sm:flex-nowrap sm:overflow-x-auto sm:overflow-y-hidden scrollbar-none">
+            <Sparkles className="mt-1 h-3 w-3 shrink-0 self-start text-orange-500 sm:mt-0 sm:self-center" />
             {quickPrompts.map((p, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSend(p)}
-                className="whitespace-nowrap px-2.5 py-1 rounded-full border border-orange-200 dark:border-orange-800 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-orange-500 hover:text-orange-500 font-medium transition-colors"
+                className="min-w-0 max-w-full break-words rounded-full border border-orange-200 bg-white px-2.5 py-1 text-left font-medium text-zinc-700 transition-colors hover:border-orange-500 hover:text-orange-500 dark:border-orange-800 dark:bg-zinc-800 dark:text-zinc-300 sm:whitespace-nowrap"
               >
                 {p}
               </button>
@@ -117,11 +123,11 @@ export const AiAssistantWidget: React.FC = () => {
           </div>
 
           {/* Chat Messages */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 text-xs">
             {messages.map((m, idx) => (
               <div
                 key={idx}
-                className={`flex gap-2.5 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex min-w-0 gap-2.5 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.role === 'assistant' && (
                   <div className="w-6 h-6 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0 mt-0.5">
@@ -129,7 +135,7 @@ export const AiAssistantWidget: React.FC = () => {
                   </div>
                 )}
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl whitespace-pre-line leading-relaxed ${
+                  className={`min-w-0 max-w-[85%] break-words p-3 rounded-2xl whitespace-pre-line leading-relaxed ${
                     m.role === 'user'
                       ? 'bg-orange-500 text-white rounded-tr-none font-medium'
                       : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-tl-none border border-zinc-200 dark:border-zinc-700/60'
@@ -161,14 +167,14 @@ export const AiAssistantWidget: React.FC = () => {
               e.preventDefault();
               handleSend();
             }}
-            className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 flex items-center gap-2"
+            className="flex items-center gap-2 border-t border-zinc-200 bg-zinc-50 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] dark:border-zinc-800 dark:bg-zinc-950 sm:pb-3"
           >
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask Billflow AI Copilot..."
-              className="flex-1 px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-orange-500"
+              className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
             />
             <button
               type="submit"

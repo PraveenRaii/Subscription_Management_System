@@ -19,6 +19,17 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
+    if (req.user?.role === 'customer') {
+      const customer = await Customer.findOne({ user: req.user._id }).select('_id');
+      if (!customer || !invoice.customer.equals(customer._id)) {
+        res.status(404).json({ success: false, message: 'Invoice not found.' });
+        return;
+      }
+    } else if (!['super_admin', 'staff'].includes(req.user?.role || '')) {
+      res.status(403).json({ success: false, message: 'Not authorized to create payments.' });
+      return;
+    }
+
     if (invoice.status === 'paid') {
       res.status(400).json({ success: false, message: 'Invoice has already been settled and paid.' });
       return;
@@ -35,10 +46,23 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
       },
     });
 
+    await Payment.create({
+      paymentId: `ORDER-${order.id}`,
+      invoice: invoice._id,
+      subscription: invoice.subscription,
+      customer: invoice.customer,
+      amount: invoice.totalAmount,
+      currency: invoice.currency,
+      paymentMethod,
+      status: 'pending',
+      gatewayOrderId: order.id,
+      metadata: { simulated: order.isSimulated },
+    });
+
     res.json({
       success: true,
       order,
-      keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_subflow_demo9928',
+      keyId: process.env.RAZORPAY_KEY_ID || '',
       invoice: {
         id: invoice._id,
         invoiceNumber: invoice.invoiceNumber,
@@ -67,6 +91,31 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<vo
     const invoice = await Invoice.findById(invoiceId);
     if (!invoice) {
       res.status(404).json({ success: false, message: 'Invoice not found.' });
+      return;
+    }
+
+    if (req.user?.role === 'customer') {
+      const customer = await Customer.findOne({ user: req.user._id }).select('_id');
+      if (!customer || !invoice.customer.equals(customer._id)) {
+        res.status(404).json({ success: false, message: 'Invoice not found.' });
+        return;
+      }
+    } else if (!['super_admin', 'staff'].includes(req.user?.role || '')) {
+      res.status(403).json({ success: false, message: 'Not authorized to verify payments.' });
+      return;
+    }
+
+    const payment = await Payment.findOne({
+      invoice: invoice._id,
+      gatewayOrderId: razorpay_order_id,
+      status: 'pending',
+    });
+    if (!payment || payment.metadata?.simulated !== Boolean(String(razorpay_order_id).startsWith('order_sim_'))) {
+      res.status(400).json({ success: false, message: 'Payment order is invalid or already used.' });
+      return;
+    }
+    if (invoice.status === 'paid') {
+      res.status(409).json({ success: false, message: 'Invoice has already been paid.' });
       return;
     }
 
@@ -118,21 +167,13 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<vo
       });
     }
 
-    // Create Payment Record
-    const paymentId = `PAY-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
-    const payment = await Payment.create({
-      paymentId,
-      invoice: invoice._id,
-      subscription: invoice.subscription,
-      customer: invoice.customer,
-      amount: invoice.totalAmount,
-      currency: invoice.currency,
-      paymentMethod,
-      status: 'success',
-      gatewayOrderId: razorpay_order_id,
-      gatewayTransactionId: razorpay_payment_id,
-      gatewaySignature: razorpay_signature,
-    });
+    // Settle the persisted order record to prevent replaying an order.
+    payment.paymentId = `PAY-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    payment.status = 'success';
+    payment.paymentMethod = paymentMethod;
+    payment.gatewayTransactionId = razorpay_payment_id;
+    payment.gatewaySignature = razorpay_signature;
+    await payment.save();
 
     // Create Ledger Transaction
     await Transaction.create({
@@ -163,7 +204,7 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<vo
       entity: 'Payment',
       entityId: payment._id.toString(),
       details: {
-        paymentId,
+        paymentId: payment.paymentId,
         invoiceNumber: invoice.invoiceNumber,
         amount: invoice.totalAmount,
         currency: invoice.currency,
@@ -194,18 +235,23 @@ export const processRefund = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    if (payment.status === 'refunded') {
+    if (!['success', 'partially_refunded'].includes(payment.status)) {
       res.status(400).json({ success: false, message: 'This payment has already been completely refunded.' });
       return;
     }
 
-    const refundAmount = amount ? Number(amount) : payment.amount;
+    const refundAmount = amount === undefined ? payment.amount - payment.refundedAmount : Number(amount);
+    const refundableAmount = payment.amount - payment.refundedAmount;
+    if (!Number.isFinite(refundAmount) || refundAmount <= 0 || refundAmount > refundableAmount) {
+      res.status(400).json({ success: false, message: 'Refund amount must be greater than zero and no more than the remaining refundable balance.' });
+      return;
+    }
     const refundResult = await initiateRefund(payment.gatewayTransactionId || `pay_sim_${payment._id}`, refundAmount, {
       reason: reason || 'Customer refund request',
     });
 
-    payment.status = refundAmount >= payment.amount ? 'refunded' : 'partially_refunded';
     payment.refundedAmount += refundAmount;
+    payment.status = payment.refundedAmount >= payment.amount ? 'refunded' : 'partially_refunded';
     payment.refundReason = reason || 'Customer requested refund';
     await payment.save();
 
