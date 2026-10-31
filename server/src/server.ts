@@ -7,6 +7,7 @@ import routes from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import { initBillingScheduler } from './services/billingScheduler.js';
+import { swaggerRouter } from './docs/swaggerDocs.js';
 
 dotenv.config();
 
@@ -14,13 +15,16 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Security & Parsing Middleware
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
   origin: true,
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Interactive API Documentation (Swagger / OpenAPI Explorer)
+app.use('/api/docs', swaggerRouter);
 
 // Apply rate limiting to all standard API routes
 app.use('/api', apiLimiter);

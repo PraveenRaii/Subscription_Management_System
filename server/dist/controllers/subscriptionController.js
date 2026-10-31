@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.recordUsage = exports.addTeamMember = exports.cancelSubscription = exports.changePlan = exports.renewSubscription = exports.resumeSubscription = exports.pauseSubscription = exports.createSubscription = exports.getSubscriptionById = exports.getSubscriptions = void 0;
+exports.recordUsage = exports.addTeamMember = exports.cancelSubscription = exports.getSubscriptionTimeline = exports.changePlan = exports.previewProration = exports.renewSubscription = exports.resumeSubscription = exports.pauseSubscription = exports.createSubscription = exports.getSubscriptionById = exports.getSubscriptions = void 0;
 const Subscription_js_1 = require("../models/Subscription.js");
 const Plan_js_1 = require("../models/Plan.js");
 const Customer_js_1 = require("../models/Customer.js");
 const Invoice_js_1 = require("../models/Invoice.js");
 const InvoiceItem_js_1 = require("../models/InvoiceItem.js");
 const UsageRecord_js_1 = require("../models/UsageRecord.js");
+const CreditNote_js_1 = require("../models/CreditNote.js");
 const auditLogger_js_1 = require("../middleware/auditLogger.js");
 const invoicePdfService_js_1 = require("../services/invoicePdfService.js");
 const emailService_js_1 = require("../services/emailService.js");
@@ -377,8 +378,8 @@ const renewSubscription = async (req, res) => {
     }
 };
 exports.renewSubscription = renewSubscription;
-// Upgrade / Downgrade Plan
-const changePlan = async (req, res) => {
+// Preview Proration Before Changing Plan
+const previewProration = async (req, res) => {
     try {
         const { id } = req.params;
         const { targetPlanId } = req.body;
@@ -392,27 +393,197 @@ const changePlan = async (req, res) => {
             res.status(404).json({ success: false, message: 'Target plan not found.' });
             return;
         }
+        const now = new Date();
+        const periodStart = new Date(subscription.currentPeriodStart);
+        const periodEnd = new Date(subscription.currentPeriodEnd);
+        const totalMs = Math.max(1, periodEnd.getTime() - periodStart.getTime());
+        const remainingMs = Math.max(0, periodEnd.getTime() - now.getTime());
+        const totalDays = Math.max(1, Math.ceil(totalMs / (1000 * 60 * 60 * 24)));
+        const remainingDays = Math.max(0, Math.ceil(remainingMs / (1000 * 60 * 60 * 24)));
+        const remainingRatio = remainingDays / totalDays;
+        const currentBasePrice = subscription.unitPrice * subscription.quantity;
+        const unusedCredit = Math.round(currentBasePrice * remainingRatio * 100) / 100;
+        const targetBasePrice = (subscription.currency === 'USD'
+            ? targetPlan.priceUSD
+            : subscription.currency === 'EUR'
+                ? targetPlan.priceEUR
+                : targetPlan.priceINR) * subscription.quantity;
+        const targetProratedCharge = Math.round(targetBasePrice * remainingRatio * 100) / 100;
+        const netAdjustment = Math.round((targetProratedCharge - unusedCredit) * 100) / 100;
+        const taxRate = subscription.taxRate || 18;
+        const taxAmount = netAdjustment > 0 ? Math.round(((netAdjustment * taxRate) / 100) * 100) / 100 : 0;
+        const totalDueToday = netAdjustment > 0 ? Math.round((netAdjustment + taxAmount) * 100) / 100 : 0;
+        const surplusCredit = netAdjustment < 0 ? Math.abs(netAdjustment) : 0;
+        const isUpgrade = targetBasePrice >= currentBasePrice;
+        res.json({
+            success: true,
+            preview: {
+                currentPlan: subscription.plan?.name,
+                targetPlan: targetPlan.name,
+                type: isUpgrade ? 'upgrade' : 'downgrade',
+                totalDaysInCycle: totalDays,
+                daysRemaining: remainingDays,
+                currentPlanCost: currentBasePrice,
+                unusedCredit,
+                targetPlanFullCost: targetBasePrice,
+                targetPlanProratedCost: targetProratedCharge,
+                netAdjustment,
+                taxRate,
+                taxAmount,
+                totalDueToday,
+                surplusCreditApplied: surplusCredit,
+                currency: subscription.currency,
+            },
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.previewProration = previewProration;
+// Upgrade / Downgrade Plan with Mathematical Proration
+const changePlan = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { targetPlanId } = req.body;
+        const subscription = await Subscription_js_1.Subscription.findById(id).populate('plan customer');
+        if (!subscription) {
+            res.status(404).json({ success: false, message: 'Subscription not found.' });
+            return;
+        }
+        const targetPlan = await Plan_js_1.Plan.findById(targetPlanId);
+        if (!targetPlan) {
+            res.status(404).json({ success: false, message: 'Target plan not found.' });
+            return;
+        }
         const oldPlan = subscription.plan;
-        const oldPrice = oldPlan.priceINR;
-        const newPrice = targetPlan.priceINR;
-        const changeType = newPrice >= oldPrice ? 'UPGRADE' : 'DOWNGRADE';
+        const customer = subscription.customer;
+        // Proration Calculation
+        const now = new Date();
+        const periodStart = new Date(subscription.currentPeriodStart);
+        const periodEnd = new Date(subscription.currentPeriodEnd);
+        const totalMs = Math.max(1, periodEnd.getTime() - periodStart.getTime());
+        const remainingMs = Math.max(0, periodEnd.getTime() - now.getTime());
+        const totalDays = Math.max(1, Math.ceil(totalMs / (1000 * 60 * 60 * 24)));
+        const remainingDays = Math.max(0, Math.ceil(remainingMs / (1000 * 60 * 60 * 24)));
+        const remainingRatio = remainingDays / totalDays;
+        const currentBasePrice = subscription.unitPrice * subscription.quantity;
+        const unusedCredit = Math.round(currentBasePrice * remainingRatio * 100) / 100;
+        const newUnitPrice = subscription.currency === 'USD'
+            ? targetPlan.priceUSD
+            : subscription.currency === 'EUR'
+                ? targetPlan.priceEUR
+                : targetPlan.priceINR;
+        const newBasePrice = newUnitPrice * subscription.quantity;
+        const targetProratedCharge = Math.round(newBasePrice * remainingRatio * 100) / 100;
+        const netAdjustment = Math.round((targetProratedCharge - unusedCredit) * 100) / 100;
+        const taxRate = subscription.taxRate || 18;
+        const taxAmount = netAdjustment > 0 ? Math.round(((netAdjustment * taxRate) / 100) * 100) / 100 : 0;
+        const totalDueToday = netAdjustment > 0 ? Math.round((netAdjustment + taxAmount) * 100) / 100 : 0;
+        const surplusCredit = netAdjustment < 0 ? Math.abs(netAdjustment) : 0;
+        const changeType = newBasePrice >= currentBasePrice ? 'UPGRADE' : 'DOWNGRADE';
+        let proratedInvoice = null;
+        let creditNote = null;
+        // If upgrade: generate immediate adjustment invoice for difference
+        if (netAdjustment > 0 && totalDueToday > 0) {
+            const invoiceNumber = `INV-PRO-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+            proratedInvoice = await Invoice_js_1.Invoice.create({
+                invoiceNumber,
+                subscription: subscription._id,
+                customer: customer._id,
+                customerName: customer.companyName || 'Customer',
+                customerEmail: customer.user?.email || 'billing@subflow.io',
+                billingAddress: customer.billingAddress,
+                billingPeriodStart: now,
+                billingPeriodEnd: periodEnd,
+                issueDate: now,
+                dueDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days due
+                status: 'unpaid',
+                currency: subscription.currency,
+                subtotal: netAdjustment,
+                taxRate,
+                taxAmount,
+                discountAmount: 0,
+                totalAmount: totalDueToday,
+                amountPaid: 0,
+                amountRemaining: totalDueToday,
+                idempotencyKey: `INV-PRORATE-${subscription.subscriptionId}-${Date.now()}`,
+                notes: `Prorated adjustment: ${oldPlan.name} upgraded to ${targetPlan.name} for ${remainingDays} remaining days.`,
+            });
+            await InvoiceItem_js_1.InvoiceItem.create({
+                invoice: proratedInvoice._id,
+                description: `Prorated Plan Upgrade (${remainingDays} days remaining): ${oldPlan.name} -> ${targetPlan.name}`,
+                quantity: 1,
+                unitPrice: netAdjustment,
+                taxRate,
+                taxAmount,
+                amount: totalDueToday,
+                type: 'subscription',
+            });
+        }
+        // If downgrade: issue credit note and store credit balance
+        if (surplusCredit > 0) {
+            const creditNoteNumber = `CN-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+            creditNote = await CreditNote_js_1.CreditNote.create({
+                creditNoteNumber,
+                invoice: subscription._id,
+                customer: customer._id,
+                amount: surplusCredit,
+                currency: subscription.currency,
+                reason: 'plan_downgrade_proration',
+                description: `Unused balance credit from downgrade: ${oldPlan.name} to ${targetPlan.name} (${remainingDays} days).`,
+                status: 'issued',
+            });
+            subscription.prorationCreditBalance = (subscription.prorationCreditBalance || 0) + surplusCredit;
+        }
+        // Update Subscription State
         subscription.plan = targetPlan._id;
-        subscription.unitPrice = subscription.currency === 'USD' ? targetPlan.priceUSD : subscription.currency === 'EUR' ? targetPlan.priceEUR : targetPlan.priceINR;
-        subscription.taxAmount = Math.round((subscription.unitPrice * subscription.quantity * subscription.taxRate) / 100);
-        subscription.totalAmount = subscription.unitPrice * subscription.quantity + subscription.taxAmount;
+        subscription.unitPrice = newUnitPrice;
+        subscription.taxAmount = Math.round((newUnitPrice * subscription.quantity * taxRate) / 100);
+        subscription.totalAmount = newUnitPrice * subscription.quantity + subscription.taxAmount;
+        // Push Activity Timeline Entry
+        if (!subscription.activityTimeline)
+            subscription.activityTimeline = [];
+        subscription.activityTimeline.push({
+            event: changeType.toLowerCase(),
+            description: changeType === 'UPGRADE'
+                ? `Upgraded from ${oldPlan.name} to ${targetPlan.name}. Prorated charge: ${subscription.currency} ${totalDueToday} (${remainingDays} days remaining).`
+                : `Downgraded from ${oldPlan.name} to ${targetPlan.name}. Prorated credit stored: ${subscription.currency} ${surplusCredit}.`,
+            timestamp: new Date(),
+            actor: req.user?.name || 'Customer',
+            metadata: { fromPlan: oldPlan.name, toPlan: targetPlan.name, netAdjustment, remainingDays },
+        });
         await subscription.save();
         await (0, auditLogger_js_1.logAudit)({
             user: req.user,
             action: `SUBSCRIPTION_${changeType}`,
             entity: 'Subscription',
             entityId: subscription._id.toString(),
-            details: { fromPlan: oldPlan.name, toPlan: targetPlan.name, newTotal: subscription.totalAmount },
+            details: {
+                fromPlan: oldPlan.name,
+                toPlan: targetPlan.name,
+                proratedAdjustment: netAdjustment,
+                totalDueToday,
+                surplusCredit,
+            },
             req,
         });
         res.json({
             success: true,
-            message: `Subscription successfully transitioned to ${targetPlan.name} (${changeType.toLowerCase()}).`,
+            message: `Subscription successfully transitioned to ${targetPlan.name} with mathematical proration.`,
+            changeType,
             subscription,
+            proration: {
+                totalDaysInCycle: totalDays,
+                daysRemaining: remainingDays,
+                unusedCredit,
+                targetPlanProratedCost: targetProratedCharge,
+                netAdjustment,
+                totalDueToday,
+                surplusCredit,
+            },
+            invoice: proratedInvoice,
+            creditNote,
         });
     }
     catch (err) {
@@ -420,6 +591,26 @@ const changePlan = async (req, res) => {
     }
 };
 exports.changePlan = changePlan;
+// Get Subscription Activity Timeline
+const getSubscriptionTimeline = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const subscription = await Subscription_js_1.Subscription.findById(id).select('subscriptionId activityTimeline plan customer').populate('plan');
+        if (!subscription) {
+            res.status(404).json({ success: false, message: 'Subscription not found.' });
+            return;
+        }
+        res.json({
+            success: true,
+            subscriptionId: subscription.subscriptionId,
+            timeline: subscription.activityTimeline || [],
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+exports.getSubscriptionTimeline = getSubscriptionTimeline;
 // Cancel Subscription
 const cancelSubscription = async (req, res) => {
     try {

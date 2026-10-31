@@ -12,17 +12,20 @@ const index_js_1 = __importDefault(require("./routes/index.js"));
 const errorHandler_js_1 = require("./middleware/errorHandler.js");
 const rateLimiter_js_1 = require("./middleware/rateLimiter.js");
 const billingScheduler_js_1 = require("./services/billingScheduler.js");
+const swaggerDocs_js_1 = require("./docs/swaggerDocs.js");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5000;
 // Security & Parsing Middleware
-app.use((0, helmet_1.default)());
+app.use((0, helmet_1.default)({ contentSecurityPolicy: false }));
 app.use((0, cors_1.default)({
     origin: true,
     credentials: true,
 }));
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
+// Interactive API Documentation (Swagger / OpenAPI Explorer)
+app.use('/api/docs', swaggerDocs_js_1.swaggerRouter);
 // Apply rate limiting to all standard API routes
 app.use('/api', rateLimiter_js_1.apiLimiter);
 // Healthcheck Route

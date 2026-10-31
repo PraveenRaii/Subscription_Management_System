@@ -4,6 +4,7 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { api } from '../../services/api';
 import { RazorpayCheckoutModal } from '../../components/common/RazorpayCheckoutModal';
+import { InvoiceStatusBadge } from '../../components/common/InvoiceStatusBadge';
 import { FileText, Download, CreditCard, Tag, CheckCircle2, AlertTriangle, X } from 'lucide-react';
 
 export const CustomerInvoicesPage: React.FC = () => {
@@ -105,17 +106,7 @@ export const CustomerInvoicesPage: React.FC = () => {
                       )}
                     </td>
                     <td className="p-4">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          inv.status === 'paid'
-                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                            : inv.status === 'overdue'
-                            ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                            : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                        }`}
-                      >
-                        {inv.status.toUpperCase()}
-                      </span>
+                      <InvoiceStatusBadge status={inv.status} />
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">

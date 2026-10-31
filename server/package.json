@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "seed": "tsx src/seed/seedData.ts"
+    "seed": "tsx src/seed/seedData.ts",
+    "test": "tsx src/test/businessLogic.test.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

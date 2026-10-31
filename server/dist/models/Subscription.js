@@ -78,6 +78,19 @@ const SubscriptionSchema = new mongoose_1.Schema({
         },
     ],
     quotation: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Quotation' },
+    prorationCreditBalance: { type: Number, default: 0 },
+    tenantId: { type: String, default: 'subflow-primary', index: true },
+    isDeleted: { type: Boolean, default: false, index: true },
+    deletedAt: { type: Date },
+    activityTimeline: [
+        {
+            event: { type: String, required: true },
+            description: { type: String, required: true },
+            timestamp: { type: Date, default: Date.now },
+            actor: { type: String, default: 'System' },
+            metadata: { type: mongoose_1.Schema.Types.Mixed, default: {} },
+        },
+    ],
     metadata: { type: mongoose_1.Schema.Types.Mixed, default: {} },
 }, { timestamps: true });
 exports.Subscription = mongoose_1.default.model('Subscription', SubscriptionSchema);

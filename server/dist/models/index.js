@@ -33,3 +33,4 @@ __exportStar(require("./Transaction.js"), exports);
 __exportStar(require("./AuditLog.js"), exports);
 __exportStar(require("./UsageRecord.js"), exports);
 __exportStar(require("./WebhookEvent.js"), exports);
+__exportStar(require("./CreditNote.js"), exports);

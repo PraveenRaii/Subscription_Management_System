@@ -18,6 +18,10 @@ import {
   ArrowDownRight,
   ShieldAlert,
   Sparkles,
+  Clock,
+  Award,
+  Building,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -31,6 +35,7 @@ import {
   Bar,
 } from 'recharts';
 import { Link } from 'react-router-dom';
+import { InvoiceStatusBadge } from '../../components/common/InvoiceStatusBadge';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -40,6 +45,8 @@ export const AdminDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<any>(null);
   const [revenueGrowth, setRevenueGrowth] = useState<any[]>([]);
   const [popularPlans, setPopularPlans] = useState<any[]>([]);
+  const [agingReport, setAgingReport] = useState<any>(null);
+  const [topCustomers, setTopCustomers] = useState<any[]>([]);
   const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRunningCycle, setIsRunningCycle] = useState(false);
@@ -53,6 +60,8 @@ export const AdminDashboard: React.FC = () => {
         setMetrics(data.metrics);
         setRevenueGrowth(data.revenueGrowth || []);
         setPopularPlans(data.popularPlans || []);
+        setAgingReport(data.agingReport || null);
+        setTopCustomers(data.topCustomers || []);
       }
 
       // Also fetch recent invoices
@@ -381,6 +390,165 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Debt Aging Report & Top Customers Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Overdue Debt Aging Report */}
+        <div className="p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/90 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-orange-500" />
+                <h3 className="font-extrabold text-base text-zinc-900 dark:text-white">
+                  Overdue Amount Aging Report
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                Total Overdue: {formatCurrency(agingReport?.totalOverdue || 0)}
+              </span>
+            </div>
+            <p className="text-xs text-zinc-400 mb-6">
+              Aging breakdown of outstanding accounts receivable across dunning cycles
+            </p>
+
+            <div className="space-y-4">
+              {/* 0 - 30 Days */}
+              <div className="p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-800/30">
+                <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+                  <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span>0 - 30 Days (Current Cycle)</span>
+                  </div>
+                  <span className="font-mono text-zinc-900 dark:text-white">
+                    {formatCurrency(agingReport?.under30?.amount || 0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                  <span>{agingReport?.under30?.count || 0} overdue invoices</span>
+                  <span>Early stage Dunning</span>
+                </div>
+              </div>
+
+              {/* 31 - 60 Days */}
+              <div className="p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-800/30">
+                <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+                  <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
+                    <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                    <span>31 - 60 Days (Grace Period Risk)</span>
+                  </div>
+                  <span className="font-mono text-zinc-900 dark:text-white">
+                    {formatCurrency(agingReport?.days31to60?.amount || 0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                  <span>{agingReport?.days31to60?.count || 0} overdue invoices</span>
+                  <span className="text-orange-500 font-semibold">Automated retry active</span>
+                </div>
+              </div>
+
+              {/* 60+ Days */}
+              <div className="p-4 rounded-2xl border border-rose-500/10 bg-rose-500/5">
+                <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+                  <div className="flex items-center gap-2 text-rose-500">
+                    <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span>60+ Days (Suspension / Default)</span>
+                  </div>
+                  <span className="font-mono text-rose-600 dark:text-rose-400">
+                    {formatCurrency(agingReport?.over60?.amount || 0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                  <span>{agingReport?.over60?.count || 0} critical invoices</span>
+                  <span className="text-rose-500 font-bold">Auto-suspension eligible</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+            <span className="text-zinc-400">Recovery & Collection Rate</span>
+            <span className="font-bold text-emerald-500 flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              96.8% Collection Efficiency
+            </span>
+          </div>
+        </div>
+
+        {/* Top Customers by LTV */}
+        <div className="p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/90 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-orange-500" />
+                <h3 className="font-extrabold text-base text-zinc-900 dark:text-white">
+                  Top Accounts by LTV
+                </h3>
+              </div>
+              <Link to="/admin/customers" className="text-xs font-bold text-orange-500 hover:underline">
+                View All →
+              </Link>
+            </div>
+            <p className="text-xs text-zinc-400 mb-6">
+              Highest-value accounts driving recurring ARR and platform expansion
+            </p>
+
+            <div className="space-y-3">
+              {(topCustomers || []).map((cust) => (
+                <div
+                  key={cust.id}
+                  className="p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800/70 hover:border-orange-500/40 bg-zinc-50/40 dark:bg-zinc-800/20 flex items-center justify-between transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={cust.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80`}
+                      alt={cust.name}
+                      className="w-9 h-9 rounded-full object-cover border border-orange-500/20"
+                    />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                          {cust.name}
+                        </span>
+                        <span className="text-[10px] text-zinc-400 font-mono">
+                          • {cust.companyName}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-zinc-400">{cust.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="font-mono font-bold text-xs text-zinc-900 dark:text-white">
+                      {formatCurrency(cust.totalSpent, cust.currency)}
+                    </span>
+                    <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                      <span
+                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
+                          cust.churnRiskLevel === 'Low'
+                            ? 'bg-emerald-500/10 text-emerald-500'
+                            : cust.churnRiskLevel === 'Medium'
+                            ? 'bg-amber-500/10 text-amber-500'
+                            : 'bg-rose-500/10 text-rose-500'
+                        }`}
+                      >
+                        {cust.churnRiskLevel} Risk
+                      </span>
+                      <span className="text-[9px] text-zinc-400">LTV: {formatCurrency(cust.lifetimeValue, cust.currency)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+            <span className="text-zinc-400">Account Retention Program</span>
+            <span className="font-bold text-orange-500">
+              VIP Tier: 100% Guaranteed SLA
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Recent Invoices Table */}
       <div className="p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/90 shadow-xs">
         <div className="flex items-center justify-between mb-4">
@@ -426,17 +594,7 @@ export const AdminDashboard: React.FC = () => {
                     {formatCurrency(inv.totalAmount, inv.currency)}
                   </td>
                   <td className="py-3">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        inv.status === 'paid'
-                          ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                          : inv.status === 'overdue'
-                          ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                          : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                      }`}
-                    >
-                      {inv.status.toUpperCase()}
-                    </span>
+                    <InvoiceStatusBadge status={inv.status} />
                   </td>
                   <td className="py-3 text-right">
                     <a

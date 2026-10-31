@@ -19,6 +19,7 @@ const staffRoutes_js_1 = __importDefault(require("./staffRoutes.js"));
 const auditLogRoutes_js_1 = __importDefault(require("./auditLogRoutes.js"));
 const notificationRoutes_js_1 = __importDefault(require("./notificationRoutes.js"));
 const webhookRoutes_js_1 = __importDefault(require("./webhookRoutes.js"));
+const creditNoteRoutes_js_1 = __importDefault(require("./creditNoteRoutes.js"));
 const billingScheduler_js_1 = require("../services/billingScheduler.js");
 const auth_js_1 = require("../middleware/auth.js");
 const roleCheck_js_1 = require("../middleware/roleCheck.js");
@@ -38,6 +39,7 @@ router.use('/staff', staffRoutes_js_1.default);
 router.use('/audit-logs', auditLogRoutes_js_1.default);
 router.use('/notifications', notificationRoutes_js_1.default);
 router.use('/webhooks', webhookRoutes_js_1.default);
+router.use('/credit-notes', creditNoteRoutes_js_1.default);
 // Manual trigger for recurring billing scheduler
 router.post('/billing/run-cycle', auth_js_1.authenticate, (0, roleCheck_js_1.authorize)('super_admin', 'staff'), async (req, res) => {
     try {

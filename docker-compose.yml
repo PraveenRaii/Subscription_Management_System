@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: subflow-backend
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - NODE_ENV=production
+      - MONGO_URI=mongodb+srv://praveen1234202040_db_user:FoUcu8EVjsWpYN1q@managementsystem.805qi91.mongodb.net/
+      - JWT_SECRET=subflow_jwt_secret_production_key_2026_saas_platform_orange
+      - RAZORPAY_KEY_ID=rzp_test_1DP5mmOlF5G5ag
+      - RAZORPAY_KEY_SECRET=s9x3W5eM6u2jE9y1Q4w7kL0z
+      - CLOUD_NAME=durfn3vvo
+      - CLOUD_API_KEY=228161363588349
+      - CLOUD_API_SECRET=1mJm_UrApEjuv14AlEbUHnYIopw
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: subflow-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

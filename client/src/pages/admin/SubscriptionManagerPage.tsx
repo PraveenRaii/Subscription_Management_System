@@ -18,6 +18,11 @@ import {
   Calendar,
   X,
   CheckCircle,
+  History,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  DollarSign,
 } from 'lucide-react';
 
 export const SubscriptionManagerPage: React.FC = () => {
@@ -36,7 +41,14 @@ export const SubscriptionManagerPage: React.FC = () => {
   const [showChangePlanModal, setShowChangePlanModal] = useState(false);
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [showUsageModal, setShowUsageModal] = useState(false);
+  const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null);
+
+  // Proration & Timeline states
+  const [prorationPreview, setProrationPreview] = useState<any>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+  const [isLoadingTimeline, setIsLoadingTimeline] = useState(false);
 
   // Form states
   const [newSubCustomer, setNewSubCustomer] = useState('');
@@ -123,6 +135,39 @@ export const SubscriptionManagerPage: React.FC = () => {
     }
   };
 
+  const fetchProrationPreview = async (planId: string, sub?: Subscription) => {
+    const activeSub = sub || selectedSub;
+    if (!activeSub || !planId) return;
+    setIsLoadingPreview(true);
+    try {
+      const res: any = await api.post(`/subscriptions/${activeSub._id}/preview-proration`, { targetPlanId: planId });
+      if (res.success) {
+        setProrationPreview(res.preview);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setProrationPreview(null);
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
+
+  const handleOpenTimeline = async (sub: Subscription) => {
+    setSelectedSub(sub);
+    setShowTimelineModal(true);
+    setIsLoadingTimeline(true);
+    try {
+      const res: any = await api.get(`/subscriptions/${sub._id}/timeline`);
+      if (res.success) {
+        setTimelineEvents(res.timeline || []);
+      }
+    } catch (err: any) {
+      showToast('Failed to load activity timeline', 'error');
+    } finally {
+      setIsLoadingTimeline(false);
+    }
+  };
+
   const handleCreateSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSubCustomer || !newSubPlan) {
@@ -147,9 +192,11 @@ export const SubscriptionManagerPage: React.FC = () => {
     e.preventDefault();
     if (!selectedSub || !targetPlanId) return;
     try {
-      await api.post(`/subscriptions/${selectedSub._id}/change-plan`, { targetPlanId });
-      showToast('Plan changed successfully', 'success');
+      const res: any = await api.post(`/subscriptions/${selectedSub._id}/change-plan`, { targetPlanId });
+      showToast(res.message || 'Plan changed successfully with mathematical proration', 'success');
       setShowChangePlanModal(false);
+      setProrationPreview(null);
+      setTargetPlanId('');
       fetchSubscriptions();
     } catch (err: any) {
       showToast(err.message, 'error');
@@ -335,12 +382,22 @@ export const SubscriptionManagerPage: React.FC = () => {
                         <button
                           onClick={() => {
                             setSelectedSub(sub);
+                            setProrationPreview(null);
+                            setTargetPlanId('');
                             setShowChangePlanModal(true);
                           }}
-                          title="Upgrade or Downgrade Plan"
+                          title="Upgrade / Downgrade with Proration"
                           className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-blue-500"
                         >
                           <TrendingUp className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          onClick={() => handleOpenTimeline(sub)}
+                          title="View Activity Timeline"
+                          className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-amber-500"
+                        >
+                          <History className="w-3.5 h-3.5" />
                         </button>
 
                         <button
@@ -480,7 +537,10 @@ export const SubscriptionManagerPage: React.FC = () => {
                 </label>
                 <select
                   value={targetPlanId}
-                  onChange={(e) => setTargetPlanId(e.target.value)}
+                  onChange={(e) => {
+                    setTargetPlanId(e.target.value);
+                    fetchProrationPreview(e.target.value);
+                  }}
                   required
                   className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs"
                 >
@@ -493,11 +553,74 @@ export const SubscriptionManagerPage: React.FC = () => {
                 </select>
               </div>
 
+              {/* Live Proration Breakdown Card */}
+              {isLoadingPreview ? (
+                <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 text-center text-xs text-zinc-400">
+                  Calculating proration adjustments...
+                </div>
+              ) : prorationPreview ? (
+                <div className="p-4 rounded-2xl border border-orange-500/20 bg-orange-500/5 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-orange-500/10">
+                    <span className="font-bold flex items-center gap-1.5 text-zinc-900 dark:text-white">
+                      {prorationPreview.type === 'upgrade' ? (
+                        <>
+                          <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider text-[10px]">
+                            Plan Upgrade
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <ArrowDownRight className="w-4 h-4 text-amber-500" />
+                          <span className="text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider text-[10px]">
+                            Plan Downgrade
+                          </span>
+                        </>
+                      )}
+                    </span>
+                    <span className="text-[11px] text-zinc-500">
+                      {prorationPreview.daysRemaining} of {prorationPreview.totalDaysInCycle} days remaining
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between text-zinc-600 dark:text-zinc-400 text-[11px]">
+                    <span>Unused Credit ({prorationPreview.currentPlan}):</span>
+                    <span className="font-mono text-zinc-800 dark:text-zinc-200">
+                      - {formatCurrency(prorationPreview.unusedCredit, prorationPreview.currency)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between text-zinc-600 dark:text-zinc-400 text-[11px]">
+                    <span>Prorated Cost ({prorationPreview.targetPlan}):</span>
+                    <span className="font-mono text-zinc-800 dark:text-zinc-200">
+                      + {formatCurrency(prorationPreview.targetPlanProratedCost, prorationPreview.currency)}
+                    </span>
+                  </div>
+
+                  <div className="pt-2 border-t border-orange-500/10 flex justify-between items-center font-bold">
+                    <span className="text-zinc-900 dark:text-white">
+                      {prorationPreview.type === 'upgrade' ? 'Net Charge Due Today:' : 'Credit Added to Balance:'}
+                    </span>
+                    <span
+                      className={`text-sm font-mono ${
+                        prorationPreview.type === 'upgrade'
+                          ? 'text-orange-600 dark:text-orange-400'
+                          : 'text-emerald-600 dark:text-emerald-400'
+                      }`}
+                    >
+                      {prorationPreview.type === 'upgrade'
+                        ? formatCurrency(prorationPreview.totalDueToday, prorationPreview.currency)
+                        : formatCurrency(prorationPreview.surplusCreditApplied, prorationPreview.currency)}
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+
               <button
                 type="submit"
                 className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-md shadow-orange-500/25"
               >
-                Confirm Plan Transition
+                Confirm Plan Transition with Proration
               </button>
             </form>
           </div>
@@ -608,6 +731,69 @@ export const SubscriptionManagerPage: React.FC = () => {
                 Record Usage Record
               </button>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modal 5: Activity Timeline */}
+      {showTimelineModal && selectedSub && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-lg rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 relative max-h-[85vh] flex flex-col">
+            <button
+              onClick={() => setShowTimelineModal(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 mb-1">
+              <History className="w-5 h-5 text-orange-500" />
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Subscription Activity Timeline</h3>
+            </div>
+            <p className="text-xs text-zinc-500 mb-4">
+              Audit trail and lifecycle transitions for <strong className="font-mono text-orange-500">{selectedSub.subscriptionId}</strong>
+            </p>
+
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+              {isLoadingTimeline ? (
+                <div className="py-8 text-center text-xs text-zinc-400">Loading activity timeline...</div>
+              ) : timelineEvents.length === 0 ? (
+                <div className="py-8 text-center text-xs text-zinc-400">No events logged yet for this subscription.</div>
+              ) : (
+                <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-zinc-200 dark:before:bg-zinc-800">
+                  {timelineEvents.map((evt, idx) => (
+                    <div key={idx} className="relative group">
+                      {/* Timeline Dot */}
+                      <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-orange-500 ring-4 ring-orange-500/20" />
+                      
+                      <div className="p-3.5 rounded-2xl border border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-800/30">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+                            {evt.event}
+                          </span>
+                          <span className="text-[10px] text-zinc-400 font-mono">
+                            {new Date(evt.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-800 dark:text-zinc-200 font-medium mt-1">
+                          {evt.description}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 mt-1">
+                          Triggered by: <span className="text-zinc-600 dark:text-zinc-300 font-semibold">{evt.actor || 'System'}</span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
+              <button
+                onClick={() => setShowTimelineModal(false)}
+                className="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold hover:bg-zinc-200"
+              >
+                Close Timeline
+              </button>
+            </div>
           </div>
         </div>
       )}

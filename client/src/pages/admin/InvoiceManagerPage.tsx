@@ -5,6 +5,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import { api } from '../../services/api';
 import { exportToCSV } from '../../services/exportUtils';
 import { RazorpayCheckoutModal } from '../../components/common/RazorpayCheckoutModal';
+import { InvoiceStatusBadge } from '../../components/common/InvoiceStatusBadge';
 import {
   FileText,
   Search,
@@ -17,6 +18,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   X,
+  RotateCcw,
 } from 'lucide-react';
 
 export const InvoiceManagerPage: React.FC = () => {
@@ -33,6 +35,11 @@ export const InvoiceManagerPage: React.FC = () => {
   const [showPayModal, setShowPayModal] = useState(false);
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showCreditNoteModal, setShowCreditNoteModal] = useState(false);
+  const [creditNoteAmount, setCreditNoteAmount] = useState<number>(0);
+  const [creditNoteReason, setCreditNoteReason] = useState('refund');
+  const [creditNoteDescription, setCreditNoteDescription] = useState('');
+  const [isIssuingCreditNote, setIsIssuingCreditNote] = useState(false);
   const [invoiceDetails, setInvoiceDetails] = useState<any>(null);
   const [couponCode, setCouponCode] = useState('');
 
@@ -85,6 +92,27 @@ export const InvoiceManagerPage: React.FC = () => {
       fetchInvoices();
     } catch (err: any) {
       showToast(err.message, 'error');
+    }
+  };
+
+  const handleIssueCreditNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInvoice || !creditNoteAmount) return;
+    setIsIssuingCreditNote(true);
+    try {
+      const res: any = await api.post('/credit-notes', {
+        invoiceId: selectedInvoice._id,
+        amount: creditNoteAmount,
+        reason: creditNoteReason,
+        description: creditNoteDescription,
+      });
+      showToast(res.message || 'Credit note issued successfully!', 'success');
+      setShowCreditNoteModal(false);
+      fetchInvoices();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to issue credit note', 'error');
+    } finally {
+      setIsIssuingCreditNote(false);
     }
   };
 
@@ -227,17 +255,7 @@ export const InvoiceManagerPage: React.FC = () => {
                       )}
                     </td>
                     <td className="p-4">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          inv.status === 'paid'
-                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                            : inv.status === 'overdue'
-                            ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                            : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                        }`}
-                      >
-                        {inv.status.toUpperCase()}
-                      </span>
+                      <InvoiceStatusBadge status={inv.status} />
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -269,6 +287,23 @@ export const InvoiceManagerPage: React.FC = () => {
                         >
                           <Mail className="w-3.5 h-3.5" />
                         </button>
+
+                        {/* Issue Credit Note / Refund Adjustment */}
+                        {inv.status !== 'cancelled' && (
+                          <button
+                            onClick={() => {
+                              setSelectedInvoice(inv);
+                              setCreditNoteAmount(inv.amountRemaining > 0 ? inv.amountRemaining : inv.totalAmount);
+                              setCreditNoteReason('refund');
+                              setCreditNoteDescription(`Credit adjustment for invoice ${inv.invoiceNumber}`);
+                              setShowCreditNoteModal(true);
+                            }}
+                            title="Issue Credit Note / Refund"
+                            className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-purple-500"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                        )}
 
                         {/* Pay with Razorpay (if unpaid) */}
                         {inv.status !== 'paid' && inv.status !== 'cancelled' && (
@@ -370,11 +405,14 @@ export const InvoiceManagerPage: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-              <span className="font-mono text-xs font-bold text-orange-600 dark:text-orange-400">
-                {invoiceDetails.invoice?.invoiceNumber}
-              </span>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                <span className="font-mono text-xs font-bold text-orange-600 dark:text-orange-400">
+                  {invoiceDetails.invoice?.invoiceNumber}
+                </span>
+              </div>
+              <InvoiceStatusBadge status={invoiceDetails.invoice?.status} />
             </div>
 
             <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Invoice Line Items</h3>
@@ -441,6 +479,98 @@ export const InvoiceManagerPage: React.FC = () => {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Note / Refund Modal */}
+      {showCreditNoteModal && selectedInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 relative">
+            <button
+              onClick={() => setShowCreditNoteModal(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 mb-1">
+              <RotateCcw className="w-5 h-5 text-orange-500" />
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Issue Credit Note / Refund</h3>
+            </div>
+            <p className="text-xs text-zinc-500 mb-4">
+              Adjustment for <strong className="font-mono text-orange-500">{selectedInvoice.invoiceNumber}</strong> ({selectedInvoice.customerName})
+            </p>
+
+            <form onSubmit={handleIssueCreditNote} className="space-y-4">
+              <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800 text-xs space-y-1">
+                <div className="flex justify-between text-zinc-500">
+                  <span>Invoice Total:</span>
+                  <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                    {formatCurrency(selectedInvoice.totalAmount, selectedInvoice.currency)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-zinc-500">
+                  <span>Balance Outstanding:</span>
+                  <span className="font-mono font-bold text-rose-500">
+                    {formatCurrency(selectedInvoice.amountRemaining, selectedInvoice.currency)}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Credit Note Amount ({selectedInvoice.currency})
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={selectedInvoice.totalAmount}
+                  step="any"
+                  value={creditNoteAmount}
+                  onChange={(e) => setCreditNoteAmount(Number(e.target.value))}
+                  required
+                  className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-mono font-bold text-zinc-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Reason for Credit Adjustment
+                </label>
+                <select
+                  value={creditNoteReason}
+                  onChange={(e) => setCreditNoteReason(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs"
+                >
+                  <option value="refund">Customer Refund</option>
+                  <option value="billing_error">Billing / Pricing Discrepancy</option>
+                  <option value="service_credit">SLA Outage / Service Credit</option>
+                  <option value="plan_downgrade_proration">Plan Downgrade Proration</option>
+                  <option value="goodwill">Commercial Goodwill Discount</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Description / Internal Memo
+                </label>
+                <textarea
+                  rows={2}
+                  value={creditNoteDescription}
+                  onChange={(e) => setCreditNoteDescription(e.target.value)}
+                  placeholder="Notes explaining why this credit note was authorized..."
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isIssuingCreditNote}
+                className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-orange-500/25 transition-all"
+              >
+                {isIssuingCreditNote ? 'Processing Credit Note...' : 'Authorize & Issue Credit Note'}
+              </button>
+            </form>
           </div>
         </div>
       )}

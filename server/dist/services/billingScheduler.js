@@ -9,6 +9,7 @@ const node_cron_1 = __importDefault(require("node-cron"));
 const Subscription_js_1 = require("../models/Subscription.js");
 const Invoice_js_1 = require("../models/Invoice.js");
 const InvoiceItem_js_1 = require("../models/InvoiceItem.js");
+const Payment_js_1 = require("../models/Payment.js");
 const Notification_js_1 = require("../models/Notification.js");
 const invoicePdfService_js_1 = require("./invoicePdfService.js");
 const emailService_js_1 = require("./emailService.js");
@@ -144,18 +145,173 @@ async function runBillingCycleNow() {
             await inv.save();
             if (inv.subscription) {
                 await Subscription_js_1.Subscription.findByIdAndUpdate(inv.subscription, {
-                    status: 'past_due',
-                    gracePeriodEndsAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days grace
+                    status: 'in_grace_period',
+                    gracePeriodEndsAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days grace buffer
+                    $push: {
+                        activityTimeline: {
+                            event: 'grace_period',
+                            description: `Invoice ${inv.invoiceNumber} overdue. 7-day grace period initiated.`,
+                            timestamp: now,
+                            actor: 'Billing Engine',
+                        },
+                    },
                 });
             }
             overdueCount++;
         }
-        console.log(`[BillingScheduler] Completed cycle: ${renewedCount} renewed, ${reminderCount} reminders sent, ${overdueCount} invoices marked overdue.`);
+        // 4. Process Free Trial Expirations (Auto-convert or Auto-cancel)
+        let trialsConverted = 0;
+        let trialsCancelled = 0;
+        const expiredTrials = await Subscription_js_1.Subscription.find({
+            status: 'trialing',
+            $or: [{ trialEndsAt: { $lte: now } }, { currentPeriodEnd: { $lte: now } }],
+        }).populate('customer plan');
+        for (const sub of expiredTrials) {
+            const customer = sub.customer;
+            const plan = sub.plan;
+            if (!customer || !plan)
+                continue;
+            if (sub.autoRenew) {
+                sub.status = 'active';
+                sub.trialEndsAt = undefined;
+                sub.startDate = now;
+                sub.currentPeriodStart = now;
+                const nextPeriod = new Date(now);
+                if (sub.billingFrequency === 'yearly')
+                    nextPeriod.setFullYear(nextPeriod.getFullYear() + 1);
+                else
+                    nextPeriod.setMonth(nextPeriod.getMonth() + 1);
+                sub.currentPeriodEnd = nextPeriod;
+                sub.renewalDate = nextPeriod;
+                if (!sub.activityTimeline)
+                    sub.activityTimeline = [];
+                sub.activityTimeline.push({
+                    event: 'trial_converted',
+                    description: `Free trial converted to active ${plan.name} subscription (${sub.billingFrequency}).`,
+                    timestamp: now,
+                    actor: 'Billing Engine',
+                });
+                await sub.save();
+                const invNumber = `INV-TR-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+                await Invoice_js_1.Invoice.create({
+                    invoiceNumber: invNumber,
+                    subscription: sub._id,
+                    customer: customer._id,
+                    customerName: customer.companyName || 'Customer',
+                    customerEmail: customer.user?.email || 'billing@subflow.io',
+                    billingAddress: customer.billingAddress,
+                    billingPeriodStart: now,
+                    billingPeriodEnd: nextPeriod,
+                    issueDate: now,
+                    dueDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
+                    status: 'unpaid',
+                    currency: sub.currency,
+                    subtotal: sub.unitPrice * sub.quantity,
+                    taxRate: sub.taxRate,
+                    taxAmount: sub.taxAmount,
+                    totalAmount: sub.totalAmount,
+                    amountPaid: 0,
+                    amountRemaining: sub.totalAmount,
+                    notes: `First billing invoice following conclusion of trial period for ${plan.name}.`,
+                });
+                trialsConverted++;
+            }
+            else {
+                sub.status = 'cancelled';
+                sub.cancelledAt = now;
+                sub.cancelReason = 'Free trial expired without auto-renewal.';
+                if (!sub.activityTimeline)
+                    sub.activityTimeline = [];
+                sub.activityTimeline.push({
+                    event: 'cancelled',
+                    description: 'Trial expired and was cancelled automatically.',
+                    timestamp: now,
+                    actor: 'Billing Engine',
+                });
+                await sub.save();
+                trialsCancelled++;
+            }
+        }
+        // 5. Dunning Engine: Retry Failed Payments on 3-day, 5-day, 7-day schedule
+        let dunningRetriedCount = 0;
+        let dunningSuspendedCount = 0;
+        const failedPayments = await Payment_js_1.Payment.find({
+            status: 'failed',
+            retryCount: { $lt: 4 },
+            $or: [{ nextRetryAt: { $lte: now } }, { nextRetryAt: { $exists: false } }],
+        }).populate('customer invoice subscription');
+        for (const pay of failedPayments) {
+            pay.retryCount = (pay.retryCount || 0) + 1;
+            if (pay.retryCount >= 3) {
+                // Exceeded 3 attempts (Day 7 passed): auto-pause subscription and flag overdue
+                if (pay.subscription) {
+                    await Subscription_js_1.Subscription.findByIdAndUpdate(pay.subscription, {
+                        status: 'paused',
+                        pausedAt: now,
+                        cancelReason: 'Suspended by automated dunning engine after 3 failed payment attempts.',
+                        $push: {
+                            activityTimeline: {
+                                event: 'paused',
+                                description: 'Subscription automatically suspended by Dunning Engine following 3 failed payment retries.',
+                                timestamp: now,
+                                actor: 'Dunning Engine',
+                            },
+                        },
+                    });
+                    dunningSuspendedCount++;
+                }
+                pay.nextRetryAt = undefined;
+            }
+            else {
+                const delayDays = pay.retryCount === 1 ? 3 : pay.retryCount === 2 ? 5 : 7;
+                pay.nextRetryAt = new Date(now.getTime() + delayDays * 24 * 60 * 60 * 1000);
+                dunningRetriedCount++;
+                const customer = pay.customer;
+                if (customer?.user) {
+                    await Notification_js_1.Notification.create({
+                        recipient: customer.user._id || customer.user,
+                        title: `Payment Attempt Failed (Attempt ${pay.retryCount} of 3)`,
+                        message: `Your payment of ${pay.currency} ${pay.amount} for invoice ${pay.invoice?.invoiceNumber || ''} failed. Next retry in ${delayDays} days. Please update your payment method.`,
+                        type: 'alert',
+                        priority: 'high',
+                    });
+                }
+            }
+            await pay.save();
+        }
+        // 6. Enforce Grace Period Expiration
+        let graceExpiredCount = 0;
+        const expiredGraceSubs = await Subscription_js_1.Subscription.find({
+            status: { $in: ['in_grace_period', 'past_due'] },
+            gracePeriodEndsAt: { $lte: now },
+        });
+        for (const sub of expiredGraceSubs) {
+            sub.status = 'paused';
+            sub.pausedAt = now;
+            if (!sub.activityTimeline)
+                sub.activityTimeline = [];
+            sub.activityTimeline.push({
+                event: 'paused',
+                description: 'Grace period expired without invoice settlement. Subscription auto-suspended.',
+                timestamp: now,
+                actor: 'Billing Engine',
+            });
+            await sub.save();
+            graceExpiredCount++;
+        }
+        console.log(`[BillingScheduler] Completed cycle: ${renewedCount} renewed, ${reminderCount} reminders sent, ${overdueCount} overdue, ${trialsConverted} trials converted, ${dunningRetriedCount} dunning retries scheduled, ${dunningSuspendedCount} dunning suspensions, ${graceExpiredCount} grace period suspensions.`);
     }
     catch (err) {
         console.error('[BillingScheduler] Error executing cycle:', err);
     }
-    return { renewedCount, reminderCount, overdueCount };
+    return {
+        renewedCount,
+        reminderCount,
+        overdueCount,
+        trialsConverted: 0,
+        dunningRetriedCount: 0,
+        dunningSuspendedCount: 0,
+    };
 }
 function initBillingScheduler() {
     // Run daily at midnight: 0 0 * * *

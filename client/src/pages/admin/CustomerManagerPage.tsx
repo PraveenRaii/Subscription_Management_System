@@ -4,6 +4,7 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { api } from '../../services/api';
 import { exportToCSV } from '../../services/exportUtils';
+import { InvoiceStatusBadge } from '../../components/common/InvoiceStatusBadge';
 import {
   Users,
   Search,
@@ -287,13 +288,7 @@ export const CustomerManagerPage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-bold">{formatCurrency(inv.totalAmount, inv.currency)}</span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          inv.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
-                        }`}
-                      >
-                        {inv.status}
-                      </span>
+                      <InvoiceStatusBadge status={inv.status} />
                     </div>
                   </div>
                 ))}

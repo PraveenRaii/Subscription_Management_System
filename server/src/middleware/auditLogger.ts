@@ -4,7 +4,7 @@ import { AuditLog } from '../models/AuditLog.js';
 interface LogOptions {
   user?: any;
   action: string;
-  entity: 'User' | 'Subscription' | 'Invoice' | 'Payment' | 'Plan' | 'Product' | 'Coupon' | 'Setting' | 'Security';
+  entity: 'User' | 'Subscription' | 'Invoice' | 'Payment' | 'Plan' | 'Product' | 'Coupon' | 'Setting' | 'Security' | 'CreditNote';
   entityId?: string;
   details?: Record<string, any>;
   severity?: 'info' | 'warning' | 'critical';

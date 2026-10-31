@@ -175,17 +175,43 @@ npm run build
 | `POST` | `/api/auth/login` | Email/password login returning JWT token |
 | `POST` | `/api/auth/upload-avatar` | Upload profile photo to Cloudinary / storage |
 | `PUT` | `/api/auth/change-password` | Update account password |
-| `GET` | `/api/analytics/dashboard` | Dashboard MRR, ARR, LTV, growth charts |
+| `GET` | `/api/docs` | Interactive Swagger / OpenAPI 3.0 API Documentation UI |
+| `GET` | `/api/docs/spec.json` | OpenAPI 3.0 JSON specification schema |
+| `GET` | `/api/analytics/dashboard` | Dashboard MRR, ARR, LTV, Aging Report (0-30, 31-60, 60+ days) & Top Customers |
 | `GET` | `/api/ai/revenue-forecast` | 6-Month Gemini AI predictive revenue model |
 | `GET` | `/api/ai/churn-prediction` | AI churn risk scoring and customer risk list |
-| `POST` | `/api/ai/chat` | AI Business Copilot conversational chatbot |
+| `POST` | `/api/ai/chat` | AI Business Copilot conversational chatbot (GPT-4o-mini & Gemini) |
 | `GET` | `/api/subscriptions` | List subscriptions with filters & pagination |
+| `POST` | `/api/subscriptions/:id/preview-proration` | Live calculation of unused credit and net charge for plan switch |
+| `POST` | `/api/subscriptions/:id/change-plan` | Upgrade/Downgrade plan with mathematical proration |
+| `GET` | `/api/subscriptions/:id/timeline` | Subscription activity event timeline & audit history |
 | `POST` | `/api/subscriptions/:id/pause` | Pause an active subscription |
 | `POST` | `/api/subscriptions/:id/resume` | Resume a paused subscription |
 | `GET` | `/api/invoices` | List invoices with status & search |
 | `GET` | `/api/invoices/:id/pdf` | Download itemized GST PDF invoice |
+| `POST` | `/api/credit-notes` | Issue Credit Note or refund adjustment on invoices |
+| `GET` | `/api/credit-notes` | List credit notes and proration credit records |
 | `POST` | `/api/payments/create-order` | Create Razorpay order |
 | `POST` | `/api/payments/verify` | Verify payment HMAC signature |
+| `POST` | `/api/billing/run-cycle` | Trigger recurring billing cycle (Dunning, renewals & trial expirations) |
+
+---
+
+## 🐳 Docker Deployment & Automated Tests
+
+### Run with Docker Compose
+```bash
+docker-compose up --build
+```
+- Backend runs on `http://localhost:5001`
+- Frontend runs on `http://localhost:3000`
+
+### Automated Business Logic Test Suite
+Run the 14-point automated test suite covering Proration, GST tax split, Dunning retries, and OTP verification:
+```bash
+cd server
+npm test
+```
 
 ---
 

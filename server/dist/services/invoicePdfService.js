@@ -25,7 +25,7 @@ async function generateInvoicePdfBuffer(invoice, items = []) {
                 .font('Helvetica')
                 .text('AI-Powered SaaS Subscription & Revenue Intelligence Platform', 40, 68)
                 .text('100 Innovation Park, Outer Ring Road, Bengaluru, KA 560103', 40, 80)
-                .text('GSTIN: 29AABCS1429B1Z8 | Email: billing@subflow.io', 40, 92);
+                .text('GSTIN: 29AABCS1429B1Z8 | HSN/SAC Code: 997331 (SaaS/Cloud Services)', 40, 92);
             // Status Badge
             const status = (invoice.status || 'UNPAID').toUpperCase();
             const statusColor = status === 'PAID' ? '#16a34a' : status === 'OVERDUE' ? '#dc2626' : '#ea580c';
@@ -134,32 +134,60 @@ async function generateInvoicePdfBuffer(invoice, items = []) {
                 .lineTo(555, y + 5)
                 .strokeColor('#e4e4e7')
                 .stroke();
-            // Totals
+            // Totals & Indian GST Split
+            const customerState = invoice.billingAddress?.state?.toLowerCase() || 'karnataka';
+            const isInterstate = !customerState.includes('karnataka') && !customerState.includes('ka');
+            const halfTax = Math.round((invoice.taxAmount / 2) * 100) / 100;
             const totalsY = y + 15;
+            let curY = totalsY;
             doc
                 .font('Helvetica')
                 .fontSize(9)
                 .fillColor('#52525b')
-                .text('Subtotal:', 360, totalsY, { width: 110, align: 'right' })
-                .text(`${invoice.currency} ${invoice.subtotal.toLocaleString('en-IN')}`, 480, totalsY, { width: 65, align: 'right' })
-                .text(`Tax (${invoice.taxRate}% GST):`, 360, totalsY + 16, { width: 110, align: 'right' })
-                .text(`${invoice.currency} ${invoice.taxAmount.toLocaleString('en-IN')}`, 480, totalsY + 16, { width: 65, align: 'right' });
+                .text('Taxable Subtotal:', 340, curY, { width: 130, align: 'right' })
+                .text(`${invoice.currency} ${invoice.subtotal.toLocaleString('en-IN')}`, 480, curY, { width: 65, align: 'right' });
+            curY += 15;
+            if (invoice.currency === 'INR') {
+                if (isInterstate) {
+                    doc
+                        .text('IGST (18% - Inter-State):', 340, curY, { width: 130, align: 'right' })
+                        .text(`${invoice.currency} ${invoice.taxAmount.toLocaleString('en-IN')}`, 480, curY, { width: 65, align: 'right' });
+                    curY += 15;
+                }
+                else {
+                    doc
+                        .text('CGST (9% - Central):', 340, curY, { width: 130, align: 'right' })
+                        .text(`${invoice.currency} ${halfTax.toLocaleString('en-IN')}`, 480, curY, { width: 65, align: 'right' });
+                    curY += 15;
+                    doc
+                        .text('SGST (9% - State):', 340, curY, { width: 130, align: 'right' })
+                        .text(`${invoice.currency} ${halfTax.toLocaleString('en-IN')}`, 480, curY, { width: 65, align: 'right' });
+                    curY += 15;
+                }
+            }
+            else {
+                doc
+                    .text(`Tax (${invoice.taxRate}%):`, 340, curY, { width: 130, align: 'right' })
+                    .text(`${invoice.currency} ${invoice.taxAmount.toLocaleString('en-IN')}`, 480, curY, { width: 65, align: 'right' });
+                curY += 15;
+            }
             if (invoice.discountAmount > 0) {
                 doc
-                    .text(`Discount (${invoice.discountCode || 'Applied'}):`, 360, totalsY + 32, { width: 110, align: 'right' })
-                    .text(`-${invoice.currency} ${invoice.discountAmount.toLocaleString('en-IN')}`, 480, totalsY + 32, { width: 65, align: 'right' });
+                    .text(`Discount (${invoice.discountCode || 'Applied'}):`, 340, curY, { width: 130, align: 'right' })
+                    .text(`-${invoice.currency} ${invoice.discountAmount.toLocaleString('en-IN')}`, 480, curY, { width: 65, align: 'right' });
+                curY += 15;
             }
             // Grand Total Box
-            const grandTotalY = totalsY + (invoice.discountAmount > 0 ? 52 : 36);
+            const grandTotalY = curY + 6;
             doc
-                .rect(360, grandTotalY - 4, 195, 26)
+                .rect(340, grandTotalY - 4, 215, 26)
                 .fill('#ea580c'); // Orange background
             doc
                 .fillColor('#ffffff')
                 .fontSize(10)
                 .font('Helvetica-Bold')
-                .text('GRAND TOTAL:', 370, grandTotalY + 4)
-                .text(`${invoice.currency} ${invoice.totalAmount.toLocaleString('en-IN')}`, 470, grandTotalY + 4, { width: 75, align: 'right' });
+                .text('GRAND TOTAL:', 350, grandTotalY + 4)
+                .text(`${invoice.currency} ${invoice.totalAmount.toLocaleString('en-IN')}`, 465, grandTotalY + 4, { width: 80, align: 'right' });
             // Notes & Footer
             doc
                 .fillColor('#71717a')
