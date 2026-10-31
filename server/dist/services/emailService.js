@@ -102,7 +102,16 @@ async function sendOtpEmail(to, name, otp) {
         return { sent: true };
     }
     catch (err) {
-        console.warn(`[OTP Email Warning] Could not send via SMTP (${err.message}). Verification Code is: ${otp}`);
+        console.error(`\n======================================================`);
+        console.error(`❌ [OTP Email Delivery Notice]: Could not send to ${to}`);
+        console.error(`Error: ${err.message}`);
+        if (err.message?.includes('Application-specific password required') || err.message?.includes('534') || err.message?.includes('BadCredentials')) {
+            console.error(`👉 GOOGLE SECURITY NOTICE: Google has rejected regular Gmail password.`);
+            console.error(`   Please create a 16-character App Password at: https://myaccount.google.com/apppasswords`);
+            console.error(`   Then put it in SMTP_PASS in server/.env & Render Environment Variables.`);
+        }
+        console.error(`🔑 CURRENT OTP FOR ${to}: ${otp}`);
+        console.error(`======================================================\n`);
         return { sent: false, reason: err.message };
     }
 }
