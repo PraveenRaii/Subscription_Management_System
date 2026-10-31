@@ -77,7 +77,7 @@ export const CustomerManagerPage: React.FC = () => {
         ReferralCode: c.referralCode,
         Status: c.status,
       }));
-      exportToCSV('SubFlow_Customers', rows);
+      exportToCSV('Billflow_Customers', rows);
       showToast('Customer CRM data exported', 'info');
     }
   };

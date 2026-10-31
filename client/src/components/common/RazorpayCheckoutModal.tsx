@@ -44,7 +44,7 @@ export const RazorpayCheckoutModal: React.FC<RazorpayModalProps> = ({
           key: keyId,
           amount: order.amount,
           currency: order.currency,
-          name: 'SubFlow 2.0',
+          name: 'Billflow 2.0',
           description: `Invoice #${invoice.invoiceNumber}`,
           order_id: order.id,
           handler: async function (response: any) {

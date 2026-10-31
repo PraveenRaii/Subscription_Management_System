@@ -88,7 +88,6 @@ const register = async (req, res) => {
             success: true,
             requiresOtp: true,
             email: user.email,
-            devOtp: otp, // surfaced for immediate ease during evaluation/demo
             message: `A 6-digit verification code has been dispatched to ${user.email}. Enter it to complete activation.`,
         });
     }
@@ -153,7 +152,7 @@ const verifyOtp = async (req, res) => {
         const token = generateToken(user._id.toString(), user.role);
         res.status(200).json({
             success: true,
-            message: 'Email verified successfully! Welcome to SubFlow 2.0.',
+            message: 'Email verified successfully! Welcome to Billflow 2.0.',
             token,
             user: {
                 id: user._id,
@@ -204,7 +203,6 @@ const resendOtp = async (req, res) => {
         res.json({
             success: true,
             message: `A new 6-digit verification code has been dispatched to ${user.email}.`,
-            devOtp: otp,
         });
     }
     catch (err) {

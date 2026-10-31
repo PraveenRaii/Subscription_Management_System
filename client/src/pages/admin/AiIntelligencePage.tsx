@@ -41,7 +41,7 @@ export const AiIntelligencePage: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([
     {
       role: 'assistant',
-      text: 'Greetings! I am the SubFlow 2.0 Gemini Intelligence Copilot. How can I assist you with financial planning, MRR projections, customer churn mitigation, or pricing elasticity today?',
+      text: 'Greetings! I am the Billflow 2.0 Gemini Intelligence Copilot. How can I assist you with financial planning, MRR projections, customer churn mitigation, or pricing elasticity today?',
     },
   ]);
   const [chatInput, setChatInput] = useState('');
@@ -452,7 +452,7 @@ export const AiIntelligencePage: React.FC = () => {
                 <Bot className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-zinc-900 dark:text-white">SubFlow 2.0 Gemini Assistant</h3>
+                <h3 className="font-bold text-sm text-zinc-900 dark:text-white">Billflow 2.0 Gemini Assistant</h3>
                 <p className="text-[11px] text-zinc-400">Contextual query engine for SaaS telemetry</p>
               </div>
             </div>

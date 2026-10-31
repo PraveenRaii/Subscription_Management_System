@@ -143,7 +143,7 @@ export const InvoiceManagerPage: React.FC = () => {
         Total: i.totalAmount,
         Status: i.status,
       }));
-      exportToCSV('SubFlow_Invoices', rows);
+      exportToCSV('Billflow_Invoices', rows);
       showToast('Exported invoices to CSV', 'info');
     }
   };
@@ -375,7 +375,7 @@ export const InvoiceManagerPage: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. SUBFLOW20"
+                  placeholder="e.g. BILLFLOW20"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                   required

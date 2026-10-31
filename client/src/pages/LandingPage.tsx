@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useTheme } from '../context/ThemeContext';
 import {
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
+  const { user, isAuthenticated } = useAuth();
   const { formatCurrency, symbol } = useCurrency();
   const { theme, toggleTheme } = useTheme();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -86,8 +88,8 @@ export const LandingPage: React.FC = () => {
 
   const faqs = [
     {
-      q: 'How does the Razorpay integration work in SubFlow 2.0?',
-      a: 'SubFlow 2.0 integrates natively with Razorpay test mode, supporting UPI, credit/debit cards, and NetBanking. Payments are strictly verified server-side with HMAC-SHA256 signatures, and webhooks automatically update invoice and subscription statuses.',
+      q: 'How does the Razorpay integration work in Billflow 2.0?',
+      a: 'Billflow 2.0 integrates natively with Razorpay test mode, supporting UPI, credit/debit cards, and NetBanking. Payments are strictly verified server-side with HMAC-SHA256 signatures, and webhooks automatically update invoice and subscription statuses.',
     },
     {
       q: 'How do the Google Gemini AI Intelligence features generate insights?',
@@ -95,7 +97,7 @@ export const LandingPage: React.FC = () => {
     },
     {
       q: 'Can customers manage their own team members and invoices?',
-      a: 'Yes! SubFlow 2.0 provides a dedicated Customer Self-Service Portal where customers can view their active subscriptions, download GST-compliant PDF invoices, pay via Razorpay, invite team members, and check usage quotas without contacting support.',
+      a: 'Yes! Billflow 2.0 provides a dedicated Customer Self-Service Portal where customers can view their active subscriptions, download GST-compliant PDF invoices, pay via Razorpay, invite team members, and check usage quotas without contacting support.',
     },
     {
       q: 'How does duplicate invoice prevention work?',
@@ -113,7 +115,7 @@ export const LandingPage: React.FC = () => {
               <Repeat className="w-4 h-4 stroke-[2.5]" />
             </div>
             <span className="font-extrabold text-lg tracking-tight">
-              Sub<span className="text-orange-500">Flow</span>
+              Bill<span className="text-orange-500">flow</span>
             </span>
             <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 px-1.5 py-0.5 bg-orange-500/10 rounded-md">
               2.0
@@ -136,20 +138,42 @@ export const LandingPage: React.FC = () => {
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
 
-            <Link
-              to="/login"
-              className="text-xs font-semibold px-4 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
-            >
-              Sign In
-            </Link>
+            {isAuthenticated ? (
+              user?.role === 'customer' ? (
+                <Link
+                  to="/portal/subscriptions"
+                  className="text-xs font-bold px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20 transition-all flex items-center gap-1.5"
+                >
+                  <span>My Portal</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              ) : (
+                <Link
+                  to="/admin"
+                  className="text-xs font-bold px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20 transition-all flex items-center gap-1.5"
+                >
+                  <span>Admin Console</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              )
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-xs font-semibold px-4 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+                >
+                  Sign In
+                </Link>
 
-            <Link
-              to="/admin"
-              className="text-xs font-bold px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20 transition-all flex items-center gap-1.5"
-            >
-              <span>Live Platform</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+                <Link
+                  to="/register"
+                  className="text-xs font-bold px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20 transition-all flex items-center gap-1.5"
+                >
+                  <span>Get Started</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -161,7 +185,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400 text-xs font-bold mb-6 animate-pulse">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>SubFlow 2.0 • AI-Powered Revenue Intelligence Platform</span>
+            <span>Billflow 2.0 • AI-Powered Revenue Intelligence Platform</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-zinc-900 dark:text-white max-w-4xl mx-auto leading-[1.12]">
@@ -379,7 +403,7 @@ export const LandingPage: React.FC = () => {
                 </div>
 
                 <Link
-                  to="/login"
+                  to={isAuthenticated ? (user?.role === 'customer' ? '/portal/subscriptions' : '/admin') : '/register'}
                   className={`mt-8 w-full py-3 rounded-xl font-bold text-xs text-center transition-all ${
                     plan.popular
                       ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25'
@@ -439,12 +463,18 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-orange-500 text-white flex items-center justify-center font-bold text-xs">
-              S
+              B
             </div>
-            <span className="font-bold text-zinc-900 dark:text-white">SubFlow 2.0</span>
+            <span className="font-bold text-zinc-900 dark:text-white">Billflow 2.0</span>
             <span>• AI-Powered SaaS Subscription & Revenue Intelligence Platform</span>
           </div>
-          <p>© 2026 SubFlow Technologies Inc. All rights reserved.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <a href="mailto:coder4986@gmail.com" className="text-orange-500 hover:underline font-medium">
+              Help Desk: coder4986@gmail.com
+            </a>
+            <span className="hidden sm:inline text-zinc-300 dark:text-zinc-700">•</span>
+            <p>© 2026 Billflow Technologies Inc. All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </div>

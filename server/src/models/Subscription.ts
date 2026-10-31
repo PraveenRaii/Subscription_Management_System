@@ -4,7 +4,7 @@ export interface ISubscription extends Document {
   subscriptionId: string;
   customer: mongoose.Types.ObjectId;
   plan: mongoose.Types.ObjectId;
-  status: 'active' | 'paused' | 'past_due' | 'in_grace_period' | 'cancelled' | 'expired' | 'trialing';
+  status: 'active' | 'paused' | 'past_due' | 'in_grace_period' | 'cancelled' | 'expired' | 'trialing' | 'pending_approval';
   billingFrequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   currency: 'INR' | 'USD' | 'EUR';
   quantity: number;
@@ -54,7 +54,7 @@ const SubscriptionSchema = new Schema<ISubscription>(
     plan: { type: Schema.Types.ObjectId, ref: 'Plan', required: true, index: true },
     status: {
       type: String,
-      enum: ['active', 'paused', 'past_due', 'in_grace_period', 'cancelled', 'expired', 'trialing'],
+      enum: ['active', 'paused', 'past_due', 'in_grace_period', 'cancelled', 'expired', 'trialing', 'pending_approval'],
       default: 'active',
       index: true,
     },

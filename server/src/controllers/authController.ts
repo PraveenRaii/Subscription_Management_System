@@ -99,7 +99,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       success: true,
       requiresOtp: true,
       email: user.email,
-      devOtp: otp, // surfaced for immediate ease during evaluation/demo
       message: `A 6-digit verification code has been dispatched to ${user.email}. Enter it to complete activation.`,
     });
   } catch (err: any) {
@@ -175,7 +174,7 @@ export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json({
       success: true,
-      message: 'Email verified successfully! Welcome to SubFlow 2.0.',
+      message: 'Email verified successfully! Welcome to Billflow 2.0.',
       token,
       user: {
         id: user._id,
@@ -231,7 +230,6 @@ export const resendOtp = async (req: Request, res: Response): Promise<void> => {
     res.json({
       success: true,
       message: `A new 6-digit verification code has been dispatched to ${user.email}.`,
-      devOtp: otp,
     });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });

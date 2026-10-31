@@ -6,7 +6,7 @@ export const CustomerAiAssistantPage: React.FC = () => {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([
     {
       role: 'assistant',
-      text: 'Hello! I am your SubFlow Support Copilot. I can assist with questions regarding your active plan features, upcoming renewal dates, invoice receipts, seat upgrades, or plan comparisons. How can I help you today?',
+      text: 'Hello! I am your Billflow Support Copilot. I can assist with questions regarding your active plan features, upcoming renewal dates, invoice receipts, seat upgrades, or plan comparisons. How can I help you today?',
     },
   ]);
   const [input, setInput] = useState('');

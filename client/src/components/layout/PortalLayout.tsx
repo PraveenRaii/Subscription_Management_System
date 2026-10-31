@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useCurrency, Currency } from '../../context/CurrencyContext';
+import { ProfileModal } from '../common/ProfileModal';
 import {
   Repeat,
   FileText,
@@ -21,6 +22,7 @@ export const PortalLayout: React.FC = () => {
   const { user, customer, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { currency, setCurrency } = useCurrency();
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -48,7 +50,7 @@ export const PortalLayout: React.FC = () => {
               <Repeat className="w-4 h-4 stroke-[2.5]" />
             </div>
             <span className="font-extrabold text-base tracking-tight text-zinc-900 dark:text-white">
-              Sub<span className="text-orange-500">Flow</span>
+              Bill<span className="text-orange-500">flow</span>
             </span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-semibold border border-orange-200 dark:border-orange-900/60">
               Customer Portal
@@ -85,6 +87,24 @@ export const PortalLayout: React.FC = () => {
             className="p-2 text-zinc-600 dark:text-zinc-400 hover:text-orange-500 rounded-lg"
           >
             {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+          </button>
+
+          {/* User Profile Avatar */}
+          <button
+            onClick={() => setIsProfileModalOpen(true)}
+            className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-orange-500/50 bg-zinc-50 dark:bg-zinc-900 transition-all text-xs font-semibold"
+            title="Manage Profile Photo"
+          >
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover border border-orange-500" />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center text-xs font-bold">
+                {user?.name?.[0]?.toUpperCase() || 'U'}
+              </div>
+            )}
+            <span className="hidden sm:inline text-zinc-700 dark:text-zinc-300 max-w-[100px] truncate">
+              {user?.name?.split(' ')[0]}
+            </span>
           </button>
 
           {/* User Signout */}
@@ -149,6 +169,12 @@ export const PortalLayout: React.FC = () => {
       <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
         <Outlet />
       </main>
+
+      {/* Customer Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </div>
   );
 };

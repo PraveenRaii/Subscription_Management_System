@@ -97,10 +97,10 @@ export const WebhookManagerPage: React.FC = () => {
           <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2">
             <div>
               <span className="text-[10px] uppercase font-bold text-zinc-400">HMAC Signing Secret</span>
-              <p className="font-mono text-xs text-zinc-700 dark:text-zinc-300 font-bold">whsec_subflow_orange_webhook_key</p>
+              <p className="font-mono text-xs text-zinc-700 dark:text-zinc-300 font-bold">whsec_billflow_orange_webhook_key</p>
             </div>
             <button
-              onClick={() => copyToClipboard('whsec_subflow_orange_webhook_key')}
+              onClick={() => copyToClipboard('whsec_billflow_orange_webhook_key')}
               className="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500"
             >
               <Copy className="w-3.5 h-3.5" />

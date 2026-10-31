@@ -11,7 +11,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('subflow_theme');
+    const saved = localStorage.getItem('billflow_theme') || localStorage.getItem('subflow_theme');
     if (saved === 'dark' || saved === 'light') return saved;
     return 'dark'; // Default sleek dark theme
   });
@@ -23,7 +23,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('subflow_theme', theme);
+    localStorage.setItem('billflow_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

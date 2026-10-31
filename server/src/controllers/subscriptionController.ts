@@ -155,12 +155,69 @@ export const createSubscription = async (req: AuthRequest, res: Response): Promi
     }
 
     const subscriptionId = `SUB-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const isCustomerSelfService = req.user?.role === 'customer';
 
+    // If customer requests a subscription, route it into Pending Approval state
+    if (isCustomerSelfService) {
+      const subscription = await Subscription.create({
+        subscriptionId,
+        customer: customerDoc._id,
+        plan: plan._id,
+        status: 'pending_approval',
+        billingFrequency: frequency,
+        currency,
+        quantity: Number(quantity),
+        seatCount: Number(seatCount),
+        unitPrice: basePrice,
+        taxRate,
+        taxAmount,
+        totalAmount,
+        startDate,
+        currentPeriodStart: startDate,
+        currentPeriodEnd: periodEnd,
+        renewalDate: periodEnd,
+        autoRenew: autoRenew !== undefined ? autoRenew : true,
+        activityTimeline: [
+          {
+            event: 'requested',
+            description: `Customer submitted request for plan ${plan.name} (${frequency}, ${seatCount} seats). Awaiting Admin verification & approval.`,
+            timestamp: startDate,
+            actor: req.user?.name || 'Customer',
+          },
+        ],
+      });
+
+      await Notification.create({
+        user: customerDoc.user,
+        title: 'Subscription Request Received',
+        message: `Your request for ${plan.name} has been received. Our administrator will review and approve your account.`,
+        type: 'subscription',
+      });
+
+      await logAudit({
+        user: req.user,
+        action: 'SUBSCRIPTION_REQUESTED',
+        entity: 'Subscription',
+        entityId: subscription._id.toString(),
+        details: { subscriptionId, plan: plan.name, totalAmount, currency, status: 'pending_approval' },
+        req,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Subscription request submitted successfully! Your account is pending administrator approval.',
+        subscription,
+        isPendingApproval: true,
+      });
+      return;
+    }
+
+    // Direct Admin / Staff Creation (Instantly Active)
     const subscription = await Subscription.create({
       subscriptionId,
       customer: customerDoc._id,
       plan: plan._id,
-      status: 'active',
+      status: plan.trialDays > 0 ? 'trialing' : 'active',
       billingFrequency: frequency,
       currency,
       quantity: Number(quantity),
@@ -174,6 +231,14 @@ export const createSubscription = async (req: AuthRequest, res: Response): Promi
       currentPeriodEnd: periodEnd,
       renewalDate: periodEnd,
       autoRenew: autoRenew !== undefined ? autoRenew : true,
+      activityTimeline: [
+        {
+          event: 'activated',
+          description: `Subscription activated by Administrator ${req.user?.name || ''} for plan ${plan.name}.`,
+          timestamp: startDate,
+          actor: req.user?.name || 'Admin',
+        },
+      ],
     });
 
     // Auto-generate First Invoice
@@ -238,6 +303,185 @@ export const createSubscription = async (req: AuthRequest, res: Response): Promi
       message: 'Subscription created and activated successfully.',
       subscription,
       invoice,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Approve Subscription Request (Admin / Staff only)
+export const approveSubscription = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const subscription = await Subscription.findById(id).populate('plan customer');
+
+    if (!subscription) {
+      res.status(404).json({ success: false, message: 'Subscription not found.' });
+      return;
+    }
+
+    if (subscription.status !== 'pending_approval') {
+      res.status(400).json({ success: false, message: `Subscription is not pending approval (status: ${subscription.status}).` });
+      return;
+    }
+
+    const plan: any = subscription.plan;
+    const customer: any = subscription.customer;
+    const now = new Date();
+    const periodEnd = new Date(now);
+
+    switch (subscription.billingFrequency) {
+      case 'daily':
+        periodEnd.setDate(periodEnd.getDate() + 1);
+        break;
+      case 'weekly':
+        periodEnd.setDate(periodEnd.getDate() + 7);
+        break;
+      case 'yearly':
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        break;
+      case 'monthly':
+      default:
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+        break;
+    }
+
+    subscription.status = plan.trialDays > 0 ? 'trialing' : 'active';
+    subscription.startDate = now;
+    subscription.currentPeriodStart = now;
+    subscription.currentPeriodEnd = periodEnd;
+    subscription.renewalDate = periodEnd;
+
+    if (!subscription.activityTimeline) subscription.activityTimeline = [];
+    subscription.activityTimeline.push({
+      event: 'approved',
+      description: `Subscription approved and activated by ${req.user?.name || 'Administrator'}.`,
+      timestamp: now,
+      actor: req.user?.name || 'Admin',
+    });
+
+    await subscription.save();
+
+    // Generate First Invoice
+    const invoiceNumber = `INV-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+    const dueDate = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+
+    const invoice = await Invoice.create({
+      invoiceNumber,
+      subscription: subscription._id,
+      customer: customer._id,
+      customerName: customer.companyName || 'Customer',
+      customerEmail: customer.user?.email || 'billing@subflow.io',
+      billingAddress: customer.billingAddress,
+      billingPeriodStart: now,
+      billingPeriodEnd: periodEnd,
+      issueDate: now,
+      dueDate,
+      status: 'unpaid',
+      currency: subscription.currency,
+      subtotal: subscription.unitPrice * subscription.quantity,
+      taxRate: subscription.taxRate,
+      taxAmount: subscription.taxAmount,
+      discountAmount: 0,
+      totalAmount: subscription.totalAmount,
+      amountPaid: 0,
+      amountRemaining: subscription.totalAmount,
+      idempotencyKey: `INV-INIT-${subscription.subscriptionId}`,
+      notes: `Subscription approval for ${plan.name}`,
+    });
+
+    await InvoiceItem.create({
+      invoice: invoice._id,
+      description: `${plan.name} - ${subscription.billingFrequency.toUpperCase()} Subscription (${subscription.seatCount} seats)`,
+      quantity: subscription.quantity,
+      unitPrice: subscription.unitPrice,
+      amount: subscription.totalAmount,
+      taxRate: subscription.taxRate,
+      taxAmount: subscription.taxAmount,
+      type: 'subscription',
+    });
+
+    try {
+      const pdfBuffer = await generateInvoicePdfBuffer(invoice);
+      await sendInvoiceEmail(invoice, pdfBuffer);
+    } catch (err: any) {
+      console.warn('Invoice email dispatch error:', err.message);
+    }
+
+    await Notification.create({
+      user: customer.user,
+      title: 'Subscription Approved! 🎉',
+      message: `Your subscription request for ${plan.name} has been approved by our administrator. Initial invoice ${invoiceNumber} is ready for payment.`,
+      type: 'subscription',
+    });
+
+    await logAudit({
+      user: req.user,
+      action: 'SUBSCRIPTION_APPROVED',
+      entity: 'Subscription',
+      entityId: subscription._id.toString(),
+      details: { subscriptionId: subscription.subscriptionId, plan: plan.name, approvedBy: req.user?.name },
+      req,
+    });
+
+    res.json({
+      success: true,
+      message: `Subscription ${subscription.subscriptionId} approved successfully and activated.`,
+      subscription,
+      invoice,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Reject Subscription Request (Admin / Staff only)
+export const rejectSubscription = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { reason = 'Request declined by administrator.' } = req.body;
+    const subscription = await Subscription.findById(id).populate('plan customer');
+
+    if (!subscription) {
+      res.status(404).json({ success: false, message: 'Subscription not found.' });
+      return;
+    }
+
+    subscription.status = 'cancelled';
+    subscription.cancelledAt = new Date();
+    subscription.cancelReason = reason;
+
+    if (!subscription.activityTimeline) subscription.activityTimeline = [];
+    subscription.activityTimeline.push({
+      event: 'rejected',
+      description: `Subscription request rejected by ${req.user?.name || 'Administrator'}: ${reason}`,
+      timestamp: new Date(),
+      actor: req.user?.name || 'Admin',
+    });
+
+    await subscription.save();
+
+    const customer: any = subscription.customer;
+    await Notification.create({
+      user: customer?.user,
+      title: 'Subscription Request Declined',
+      message: `Your request for ${(subscription.plan as any)?.name} was not approved: ${reason}`,
+      type: 'subscription',
+    });
+
+    await logAudit({
+      user: req.user,
+      action: 'SUBSCRIPTION_REJECTED',
+      entity: 'Subscription',
+      entityId: subscription._id.toString(),
+      details: { subscriptionId: subscription.subscriptionId, reason },
+      req,
+    });
+
+    res.json({
+      success: true,
+      message: `Subscription request ${subscription.subscriptionId} rejected.`,
+      subscription,
     });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });

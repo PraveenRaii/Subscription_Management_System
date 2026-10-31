@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { api } from '../../services/api';
+import { ThreeDBackground } from '../../components/common/ThreeDBackground';
 import { Repeat, Lock, Mail, ArrowRight, Eye, EyeOff, Sparkles, Shield, User, Users } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -65,14 +66,17 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 text-zinc-900 dark:text-zinc-100">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <Link to="/" className="inline-flex items-center gap-2 mb-4">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/25">
+    <div className="relative min-h-screen bg-transparent flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 text-zinc-900 dark:text-zinc-100 overflow-hidden">
+      {/* Full-Screen 3D Geometric Matrix & Wave Background Animation */}
+      <ThreeDBackground />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
+        <Link to="/" className="inline-flex items-center gap-2 mb-4 group">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/30 group-hover:scale-105 transition-transform">
             <Repeat className="w-5 h-5 stroke-[2.5]" />
           </div>
           <span className="font-black text-2xl tracking-tight text-zinc-900 dark:text-white">
-            Sub<span className="text-orange-500">Flow</span> 2.0
+            Bill<span className="text-orange-500">flow</span> 2.0
           </span>
         </Link>
         <h2 className="text-2xl font-extrabold tracking-tight">Sign in to your account</h2>
@@ -84,8 +88,8 @@ export const LoginPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white dark:bg-zinc-900/90 py-8 px-6 sm:px-10 shadow-2xl rounded-3xl border border-zinc-200 dark:border-zinc-800">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="backdrop-blur-2xl bg-white/80 dark:bg-zinc-900/80 py-8 px-6 sm:px-10 shadow-2xl rounded-3xl border border-zinc-200/70 dark:border-zinc-800/80 shadow-orange-500/10">
           {/* Quick Demo Selector */}
           <div className="mb-6 p-3.5 rounded-2xl border border-orange-500/30 bg-orange-500/5">
             <p className="text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -250,6 +254,13 @@ export const LoginPage: React.FC = () => {
             </button>
           </div>
         </div>
+
+        <p className="mt-4 text-center text-[11px] text-zinc-500 dark:text-zinc-400">
+          Need billing or account help? Email us at{' '}
+          <a href="mailto:coder4986@gmail.com" className="font-semibold text-orange-500 hover:underline">
+            coder4986@gmail.com
+          </a>
+        </p>
       </div>
     </div>
   );

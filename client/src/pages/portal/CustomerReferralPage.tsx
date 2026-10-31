@@ -20,7 +20,7 @@ export const CustomerReferralPage: React.FC = () => {
       <div>
         <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Referrals &amp; Reward Credits</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-          Invite other businesses to SubFlow 2.0 and earn 20% recurring billing credits on every successful referral.
+          Invite other businesses to Billflow 2.0 and earn 20% recurring billing credits on every successful referral.
         </p>
       </div>
 
@@ -29,7 +29,7 @@ export const CustomerReferralPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 text-xs font-bold mb-2">
-              <Gift className="w-3.5 h-3.5" /> SubFlow Partner Program
+              <Gift className="w-3.5 h-3.5" /> Billflow Partner Program
             </div>
             <h3 className="text-2xl font-black text-zinc-900 dark:text-white">
               Earn Credits on Every Referral

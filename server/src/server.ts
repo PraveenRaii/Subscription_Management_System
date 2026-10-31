@@ -33,7 +33,7 @@ app.use('/api', apiLimiter);
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
-    name: 'SubFlow 2.0 API',
+    name: 'Billflow 2.0 API',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     version: '2.0.0',
@@ -54,7 +54,7 @@ async function startServer() {
 
   app.listen(PORT, () => {
     console.log(`\n======================================================`);
-    console.log(`🚀 SubFlow 2.0 Backend Server Running on Port ${PORT}`);
+    console.log(`🚀 Billflow 2.0 Backend Server Running on Port ${PORT}`);
     console.log(`📡 API Health: http://localhost:${PORT}/api/health`);
     console.log(`🎨 UI Accent: Orange (#f97316)`);
     console.log(`======================================================\n`);

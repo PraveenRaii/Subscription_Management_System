@@ -325,8 +325,8 @@ async function seedDatabase() {
   // Products
   const prodPlatform = await Product.create({
     productId: 'PROD-101',
-    name: 'SubFlow Cloud SaaS Core',
-    slug: 'subflow-cloud-saas-core',
+    name: 'Billflow Cloud SaaS Core',
+    slug: 'billflow-cloud-saas-core',
     description: 'Centralized subscription billing, self-service portals, automated invoices, and tax calculation.',
     category: 'SaaS',
     images: ['https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400'],
@@ -1320,7 +1320,7 @@ async function seedDatabase() {
     {
       recipient: adminUser._id,
       title: 'Monthly Recurring Revenue milestone',
-      message: 'SubFlow 2.0 has crossed INR 4,85,000 MRR (+14.2% MoM).',
+      message: 'Billflow 2.0 has crossed INR 4,85,000 MRR (+14.2% MoM).',
       type: 'billing',
       priority: 'high',
       actionUrl: '/admin/analytics',

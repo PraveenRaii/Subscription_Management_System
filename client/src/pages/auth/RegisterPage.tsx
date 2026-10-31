@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { api } from '../../services/api';
+import { ThreeDBackground } from '../../components/common/ThreeDBackground';
 import {
   Repeat,
   Lock,
@@ -14,6 +15,8 @@ import {
   RotateCw,
   ArrowLeft,
   Sparkles,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 export const RegisterPage: React.FC = () => {
@@ -24,6 +27,7 @@ export const RegisterPage: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [currency, setCurrency] = useState<'INR' | 'USD' | 'EUR'>('INR');
   const [taxId, setTaxId] = useState('');
@@ -96,7 +100,7 @@ export const RegisterPage: React.FC = () => {
         }, 100);
       } else {
         login(res.token, res.user, res.customer);
-        showToast('Account created successfully! Welcome to SubFlow.', 'success');
+        showToast('Account created successfully! Welcome to Billflow.', 'success');
         navigate('/portal');
       }
     } catch (err: any) {
@@ -169,7 +173,7 @@ export const RegisterPage: React.FC = () => {
       });
 
       login(res.token, res.user, res.customer);
-      showToast('Email verified successfully! Welcome to SubFlow 2.0.', 'success');
+      showToast('Email verified successfully! Welcome to Billflow 2.0.', 'success');
       navigate('/portal');
     } catch (err: any) {
       showToast(err.message || 'OTP verification failed. Please check the code.', 'error');
@@ -197,14 +201,17 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 text-zinc-900 dark:text-zinc-100 transition-colors">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <Link to="/" className="inline-flex items-center gap-2 mb-4">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/25">
+    <div className="relative min-h-screen bg-transparent flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 text-zinc-900 dark:text-zinc-100 transition-colors overflow-hidden">
+      {/* Full-Screen 3D Geometric Matrix & Wave Background Animation */}
+      <ThreeDBackground />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
+        <Link to="/" className="inline-flex items-center gap-2 mb-4 group">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/30 group-hover:scale-105 transition-transform">
             <Repeat className="w-5 h-5 stroke-[2.5]" />
           </div>
           <span className="font-black text-2xl tracking-tight text-zinc-900 dark:text-white">
-            Sub<span className="text-orange-500">Flow</span> 2.0
+            Bill<span className="text-orange-500">flow</span> 2.0
           </span>
         </Link>
         <h2 className="text-2xl font-extrabold tracking-tight">
@@ -224,8 +231,8 @@ export const RegisterPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white dark:bg-zinc-900/90 py-8 px-6 sm:px-10 shadow-2xl rounded-3xl border border-zinc-200 dark:border-zinc-800">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="backdrop-blur-2xl bg-white/80 dark:bg-zinc-900/80 py-8 px-6 sm:px-10 shadow-2xl rounded-3xl border border-zinc-200/70 dark:border-zinc-800/80 shadow-orange-500/10">
           {step === 'details' ? (
             /* STEP 1: Registration Form */
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
@@ -316,13 +323,21 @@ export const RegisterPage: React.FC = () => {
                 <div className="relative">
                   <Lock className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••••••"
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium"
+                    className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute right-3 top-2.5 p-0.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
 
                 {/* Password Strength Indicator */}
@@ -387,24 +402,6 @@ export const RegisterPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Developer / Demo Quick-Fill Helper */}
-              {devOtp && (
-                <div
-                  onClick={handleQuickFill}
-                  className="p-3 rounded-2xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 flex items-center justify-between cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0" />
-                    <span className="text-[11px] text-orange-800 dark:text-orange-300 font-medium">
-                      Demo Helper: Your OTP is <strong className="font-mono text-sm tracking-wider text-orange-600 dark:text-orange-400">{devOtp}</strong>
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider bg-orange-200/60 dark:bg-orange-900/80 px-2 py-0.5 rounded-full">
-                    1-Click Fill
-                  </span>
-                </div>
-              )}
-
               {/* 6 Digit OTP Inputs */}
               <div>
                 <label className="block text-center text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
@@ -467,6 +464,19 @@ export const RegisterPage: React.FC = () => {
                   <RotateCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
                   {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
                 </button>
+              </div>
+
+              {/* Help & Support Mail */}
+              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 text-center text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p>
+                  Didn't receive the email? Check your Spam/Junk folder or contact support at{' '}
+                  <a
+                    href="mailto:coder4986@gmail.com"
+                    className="font-semibold text-orange-600 dark:text-orange-400 hover:underline"
+                  >
+                    coder4986@gmail.com
+                  </a>
+                </p>
               </div>
             </div>
           )}

@@ -1,7 +1,8 @@
-const BASE_URL = '/api';
+const API_ORIGIN = import.meta.env.VITE_API_URL || '';
+const BASE_URL = `${API_ORIGIN}/api`;
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('subflow_token');
+  const token = localStorage.getItem('billflow_token') || localStorage.getItem('subflow_token');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),

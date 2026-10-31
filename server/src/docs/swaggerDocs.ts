@@ -5,12 +5,12 @@ export const swaggerRouter = Router();
 const openApiSpec = {
   openapi: '3.0.0',
   info: {
-    title: 'SubFlow 2.0 API',
+    title: 'Billflow 2.0 API',
     version: '2.0.0',
     description: 'Enterprise AI-Powered SaaS Subscription, Automated Billing & Revenue Intelligence API',
     contact: {
-      name: 'SubFlow Platform Engineering',
-      email: 'api@subflow.io',
+      name: 'Billflow Platform Engineering',
+      email: 'api@billflow.io',
     },
   },
   servers: [
@@ -284,7 +284,7 @@ swaggerRouter.get('/', (_req: Request, res: Response) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SubFlow 2.0 - API Documentation</title>
+  <title>Billflow 2.0 - API Documentation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -464,9 +464,9 @@ swaggerRouter.get('/', (_req: Request, res: Response) => {
 <body>
   <header>
     <div class="brand">
-      <div class="brand-logo">S</div>
+      <div class="brand-logo">B</div>
       <div class="brand-text">
-        <h1>SubFlow 2.0 API Docs</h1>
+        <h1>Billflow 2.0 API Docs</h1>
         <span>SaaS Billing, Proration & AI Revenue Engine</span>
       </div>
     </div>
@@ -478,7 +478,7 @@ swaggerRouter.get('/', (_req: Request, res: Response) => {
   <div class="container">
     <div class="hero">
       <h2>Interactive REST API Documentation</h2>
-      <p>Explore all production endpoints for SubFlow 2.0. Includes 2-Step OTP Authentication, Mathematical Proration, Razorpay Gateway, GST Tax Billing, Dunning Retries, and AI Intelligence.</p>
+      <p>Explore all production endpoints for Billflow 2.0. Includes 2-Step OTP Authentication, Mathematical Proration, Razorpay Gateway, GST Tax Billing, Dunning Retries, and AI Intelligence.</p>
       <div class="badge-bar">
         <span class="badge orange">OpenAPI 3.0</span>
         <span class="badge">Base URL: /api</span>

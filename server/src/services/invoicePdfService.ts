@@ -17,7 +17,7 @@ export async function generateInvoicePdfBuffer(invoice: IInvoice, items: IInvoic
         .fillColor('#ea580c') // Orange 600
         .fontSize(24)
         .font('Helvetica-Bold')
-        .text('SUBFLOW 2.0', 40, 40);
+        .text('BILLFLOW 2.0', 40, 40);
 
       doc
         .fillColor('#71717a')
@@ -224,7 +224,7 @@ export async function generateInvoicePdfBuffer(invoice: IInvoice, items: IInvoic
           690,
           { width: 515, align: 'center' }
         )
-        .text('Powered by SubFlow 2.0 • AI-Powered Subscription & Revenue Intelligence Platform', 40, 715, {
+        .text('Powered by Billflow 2.0 • AI-Powered Subscription & Revenue Intelligence Platform', 40, 715, {
           width: 515,
           align: 'center',
         });
