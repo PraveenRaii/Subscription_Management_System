@@ -28,4 +28,8 @@ router.post('/:id/renew', renewSubscription);
 router.post('/:id/preview-proration', previewProration);
 router.post('/:id/change-plan', changePlan);
 router.get('/:id/timeline', getSubscriptionTimeline);
-rou
+router.post('/:id/cancel', cancelSubscription);
+router.post('/:id/team-members', addTeamMember);
+router.post('/:id/usage', recordUsage);
+
+export default router;

@@ -14,6 +14,7 @@ import staffRoutes from './staffRoutes.js';
 import auditLogRoutes from './auditLogRoutes.js';
 import notificationRoutes from './notificationRoutes.js';
 import webhookRoutes from './webhookRoutes.js';
+import creditNoteRoutes from './creditNoteRoutes.js';
 import { runBillingCycleNow } from '../services/billingScheduler.js';
 import { authenticate } from '../middleware/auth.js';
 import { authorize } from '../middleware/roleCheck.js';
@@ -35,6 +36,7 @@ router.use('/staff', staffRoutes);
 router.use('/audit-logs', auditLogRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/webhooks', webhookRoutes);
+router.use('/credit-notes', creditNoteRoutes);
 
 // Manual trigger for recurring billing scheduler
 router.post('/billing/run-cycle', authenticate, authorize('super_admin', 'staff'), async (req, res) => {
