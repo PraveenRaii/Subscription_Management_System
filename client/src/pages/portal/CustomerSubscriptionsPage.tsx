@@ -288,7 +288,7 @@ export const CustomerSubscriptionsPage: React.FC = () => {
 
       {/* Upgrade / Downgrade Modal */}
       {showUpgradeModal && selectedSub && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-3 bg-zinc-950/70 backdrop-blur-sm animate-fade-in sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 relative">
             <button
               onClick={() => setShowUpgradeModal(false)}
@@ -334,7 +334,7 @@ export const CustomerSubscriptionsPage: React.FC = () => {
 
       {/* Subscribe to New Plan Modal */}
       {showSubscribeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/75 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-3 bg-zinc-950/75 backdrop-blur-sm animate-fade-in sm:items-center sm:p-4">
           <div className="w-full max-w-2xl rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 md:p-8 relative max-h-[90vh] flex flex-col">
             <button
               onClick={() => setShowSubscribeModal(false)}
