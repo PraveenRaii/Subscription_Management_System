@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   RotateCw,
   ArrowLeft,
-  Sparkles,
   Eye,
   EyeOff,
 } from 'lucide-react';
@@ -35,7 +34,6 @@ export const RegisterPage: React.FC = () => {
 
   // OTP Fields
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
-  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(60);
   const [isResending, setIsResending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -90,7 +88,6 @@ export const RegisterPage: React.FC = () => {
       });
 
       if (res.requiresOtp) {
-        setDevOtp(res.devOtp || null);
         setStep('otp');
         setResendCooldown(60);
         showToast(`Verification code sent to ${email}`, 'info');
@@ -148,15 +145,6 @@ export const RegisterPage: React.FC = () => {
     }
   };
 
-  // Fast-fill demo OTP
-  const handleQuickFill = () => {
-    if (devOtp && devOtp.length === 6) {
-      const digits = devOtp.split('');
-      setOtpDigits(digits);
-      verifyOtpCode(devOtp);
-    }
-  };
-
   // Verify OTP API Call
   const verifyOtpCode = async (codeToVerify?: string) => {
     const code = codeToVerify || otpDigits.join('');
@@ -187,8 +175,7 @@ export const RegisterPage: React.FC = () => {
     if (resendCooldown > 0) return;
     setIsResending(true);
     try {
-      const res: any = await api.post('/auth/resend-otp', { email: email.trim() });
-      setDevOtp(res.devOtp || null);
+      await api.post('/auth/resend-otp', { email: email.trim() });
       setResendCooldown(60);
       setOtpDigits(['', '', '', '', '', '']);
       showToast('New verification code dispatched to your email!', 'success');

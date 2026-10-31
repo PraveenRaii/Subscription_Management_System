@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "AI-Powered SaaS Subscription, Billing & Revenue Intelligence Platform",
   "scripts": {
-    "build": "npm --prefix server install && npm --prefix server run build && npm --prefix client install && npm --prefix client run build",
+    "build": "npm --prefix server install --include=dev && npm --prefix server run build && npm --prefix client install --include=dev && npm --prefix client run build",
     "start": "node server/dist/server.js",
     "seed": "npm --prefix server run seed",
     "dev:server": "cd server && npm run dev",
