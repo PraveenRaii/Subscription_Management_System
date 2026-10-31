@@ -9,7 +9,7 @@ export const AiAssistantWidget: React.FC = () => {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([
     {
       role: 'assistant',
-      text: 'Hello! I am your SubFlow 2.0 AI Business Intelligence Copilot powered by Google Gemini. Ask me anything about MRR, churn forecasting, payment collections, or retention strategies.',
+      text: 'Hello! I am your SubFlow 2.0 AI Business Intelligence & Financial Copilot. Ask me anything about MRR, churn forecasting, payment collections, or retention strategies.',
     },
   ]);
 

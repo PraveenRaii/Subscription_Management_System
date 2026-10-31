@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auditLogController_js_1 = require("../controllers/auditLogController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const roleCheck_js_1 = require("../middleware/roleCheck.js");
+const router = (0, express_1.Router)();
+router.use(auth_js_1.authenticate, (0, roleCheck_js_1.authorize)('super_admin'));
+router.get('/', auditLogController_js_1.getAuditLogs);
+exports.default = router;

@@ -14,8 +14,10 @@ import {
   LogOut,
   ShieldAlert,
   Sparkles,
+  Camera,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ProfileModal } from '../common/ProfileModal';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -30,6 +32,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -192,6 +195,18 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
               </div>
 
               <div className="py-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    setIsProfileModalOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-zinc-700 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:text-orange-600 rounded-lg text-left transition-colors cursor-pointer"
+                >
+                  <Camera className="w-3.5 h-3.5 text-orange-500" />
+                  <span>Edit Profile &amp; Photo</span>
+                </button>
+
                 {user?.role === 'customer' ? (
                   <Link
                     to="/portal"
@@ -212,7 +227,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
 
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg font-medium text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg font-medium text-left cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" /> Sign Out
                 </button>
@@ -221,6 +236,12 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           )}
         </div>
       </div>
+
+      {/* Global Profile & Photo Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </header>
   );
 };

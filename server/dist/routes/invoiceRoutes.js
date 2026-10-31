@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const invoiceController_js_1 = require("../controllers/invoiceController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const roleCheck_js_1 = require("../middleware/roleCheck.js");
+const router = (0, express_1.Router)();
+router.use(auth_js_1.authenticate);
+router.get('/', invoiceController_js_1.getInvoices);
+router.get('/:id', invoiceController_js_1.getInvoiceById);
+router.get('/:id/pdf', invoiceController_js_1.downloadInvoicePdf);
+router.post('/:id/send-email', invoiceController_js_1.sendInvoiceByEmail);
+router.post('/:id/cancel', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), invoiceController_js_1.cancelInvoice);
+router.post('/:id/apply-coupon', invoiceController_js_1.applyCouponToInvoice);
+exports.default = router;

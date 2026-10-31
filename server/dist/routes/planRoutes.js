@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const planController_js_1 = require("../controllers/planController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const roleCheck_js_1 = require("../middleware/roleCheck.js");
+const router = (0, express_1.Router)();
+router.get('/', planController_js_1.getPlans);
+router.get('/:id', planController_js_1.getPlanById);
+router.post('/', auth_js_1.authenticate, (0, roleCheck_js_1.authorize)('super_admin', 'staff'), planController_js_1.createPlan);
+router.put('/:id', auth_js_1.authenticate, (0, roleCheck_js_1.authorize)('super_admin', 'staff'), planController_js_1.updatePlan);
+router.delete('/:id', auth_js_1.authenticate, (0, roleCheck_js_1.authorize)('super_admin'), planController_js_1.deletePlan);
+exports.default = router;

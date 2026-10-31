@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const aiController_js_1 = require("../controllers/aiController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const roleCheck_js_1 = require("../middleware/roleCheck.js");
+const router = (0, express_1.Router)();
+router.use(auth_js_1.authenticate);
+router.get('/revenue-forecast', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), aiController_js_1.getRevenuePrediction);
+router.get('/churn-prediction', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), aiController_js_1.getChurnPrediction);
+router.get('/plan-recommendation', aiController_js_1.getPlanRecommendation);
+router.post('/chat', aiController_js_1.chatWithBusinessAssistant);
+router.get('/financial-insights', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), aiController_js_1.getFinancialInsights);
+router.get('/retention-suggestions', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), aiController_js_1.getRetentionSuggestions);
+exports.default = router;

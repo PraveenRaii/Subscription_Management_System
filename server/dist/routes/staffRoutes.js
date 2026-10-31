@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const staffController_js_1 = require("../controllers/staffController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const roleCheck_js_1 = require("../middleware/roleCheck.js");
+const router = (0, express_1.Router)();
+router.use(auth_js_1.authenticate, (0, roleCheck_js_1.authorize)('super_admin'));
+router.get('/', staffController_js_1.getStaffMembers);
+router.put('/:id', staffController_js_1.updateStaffPermissions);
+exports.default = router;

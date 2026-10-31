@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const couponController_js_1 = require("../controllers/couponController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const roleCheck_js_1 = require("../middleware/roleCheck.js");
+const router = (0, express_1.Router)();
+router.post('/validate', couponController_js_1.validateCoupon);
+router.use(auth_js_1.authenticate);
+router.get('/', couponController_js_1.getCoupons);
+router.post('/', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), couponController_js_1.createCoupon);
+router.put('/:id/toggle', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), couponController_js_1.toggleCouponStatus);
+exports.default = router;

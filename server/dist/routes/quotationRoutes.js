@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const quotationController_js_1 = require("../controllers/quotationController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const roleCheck_js_1 = require("../middleware/roleCheck.js");
+const router = (0, express_1.Router)();
+router.use(auth_js_1.authenticate);
+router.get('/', quotationController_js_1.getQuotations);
+router.post('/', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), quotationController_js_1.createQuotation);
+router.put('/:id/status', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), quotationController_js_1.updateQuotationStatus);
+exports.default = router;

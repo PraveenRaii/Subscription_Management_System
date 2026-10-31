@@ -114,15 +114,31 @@ export const LoginPage: React.FC = () => {
                 className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 hover:border-orange-500 text-left transition-colors flex items-center gap-1.5"
               >
                 <Users className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Acme Corp</span>
+                <span>Acme Corp (INR)</span>
               </button>
               <button
                 type="button"
-                onClick={() => fillDemoAccount('jane@novatech.io')}
+                onClick={() => fillDemoAccount('elena@apexfin.com')}
+                className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 hover:border-orange-500 text-left transition-colors flex items-center gap-1.5"
+              >
+                <Users className="w-3.5 h-3.5 text-amber-500" />
+                <span>Apex FinTech (USD)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => fillDemoAccount('vikram@cloudmatrix.dev')}
+                className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 hover:border-orange-500 text-left transition-colors flex items-center gap-1.5"
+              >
+                <Users className="w-3.5 h-3.5 text-red-500" />
+                <span>CloudMatrix (Grace)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => fillDemoAccount('david@zephyrstudio.design')}
                 className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 hover:border-orange-500 text-left transition-colors flex items-center gap-1.5"
               >
                 <Users className="w-3.5 h-3.5 text-purple-500" />
-                <span>NovaTech</span>
+                <span>Zephyr (Trial EUR)</span>
               </button>
             </div>
           </div>
