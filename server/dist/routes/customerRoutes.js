@@ -7,6 +7,6 @@ const roleCheck_js_1 = require("../middleware/roleCheck.js");
 const router = (0, express_1.Router)();
 router.use(auth_js_1.authenticate);
 router.get('/', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), customerController_js_1.getCustomers);
-router.get('/:id', customerController_js_1.getCustomerById);
-router.put('/:id', customerController_js_1.updateCustomer);
+router.get('/:id', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), customerController_js_1.getCustomerById);
+router.put('/:id', (0, roleCheck_js_1.authorize)('super_admin', 'staff'), customerController_js_1.updateCustomer);
 exports.default = router;

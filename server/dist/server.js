@@ -24,7 +24,12 @@ app.use((0, cors_1.default)({
     origin: true,
     credentials: true,
 }));
-app.use(express_1.default.json({ limit: '10mb' }));
+app.use(express_1.default.json({
+    limit: '10mb',
+    verify: (req, _res, buffer) => {
+        req.rawBody = Buffer.from(buffer);
+    },
+}));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
 // Interactive API Documentation (Swagger / OpenAPI Explorer)
 app.use('/api/docs', swaggerDocs_js_1.swaggerRouter);

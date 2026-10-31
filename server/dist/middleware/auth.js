@@ -16,9 +16,13 @@ const authenticate = async (req, res, next) => {
             res.status(401).json({ success: false, message: 'Authentication required. No token provided.' });
             return;
         }
-        const secret = process.env.JWT_SECRET || 'super_secret_jwt_subflow_2026';
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            res.status(500).json({ success: false, message: 'Authentication is not configured.' });
+            return;
+        }
         const decoded = jsonwebtoken_1.default.verify(token, secret);
-        const user = await User_js_1.User.findById(decoded.id).select('+password');
+        const user = await User_js_1.User.findById(decoded.id);
         if (!user) {
             res.status(401).json({ success: false, message: 'User belonging to this token no longer exists.' });
             return;

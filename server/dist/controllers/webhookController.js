@@ -8,8 +8,12 @@ const Payment_js_1 = require("../models/Payment.js");
 const handleRazorpayWebhook = async (req, res) => {
     try {
         const signature = req.headers['x-razorpay-signature'];
-        const rawBody = JSON.stringify(req.body);
-        const isValid = signature ? (0, razorpayService_js_1.verifyWebhookSignature)(rawBody, signature) : true; // In dev sandbox, accept
+        const rawBody = req.rawBody?.toString('utf8') || '';
+        const isValid = (0, razorpayService_js_1.verifyWebhookSignature)(rawBody, signature || '');
+        if (!isValid) {
+            res.status(401).json({ success: false, message: 'Invalid webhook signature.' });
+            return;
+        }
         const event = req.body.event || 'unknown';
         const payload = req.body.payload || {};
         const eventId = `EVT-${Date.now()}-${Math.floor(Math.random() * 9000)}`;
@@ -18,7 +22,7 @@ const handleRazorpayWebhook = async (req, res) => {
             eventType: event,
             source: 'razorpay',
             payload: req.body,
-            status: isValid ? 'processed' : 'failed',
+            status: 'processed',
             headers: req.headers,
         });
         if (event === 'payment.captured' && payload.payment?.entity) {
@@ -26,7 +30,7 @@ const handleRazorpayWebhook = async (req, res) => {
             const orderId = p.order_id;
             if (orderId) {
                 const paymentRecord = await Payment_js_1.Payment.findOne({ gatewayOrderId: orderId });
-                if (paymentRecord) {
+                if (paymentRecord && paymentRecord.status === 'pending' && paymentRecord.amount * 100 === p.amount && paymentRecord.currency === p.currency) {
                     paymentRecord.status = 'success';
                     paymentRecord.gatewayTransactionId = p.id;
                     await paymentRecord.save();

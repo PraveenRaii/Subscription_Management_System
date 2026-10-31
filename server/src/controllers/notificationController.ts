@@ -31,7 +31,15 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
 export const markAsRead = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    await Notification.findByIdAndUpdate(id, { isRead: true, readAt: new Date() });
+    const notification = await Notification.findOneAndUpdate(
+      { _id: id, recipient: req.user?._id },
+      { isRead: true, readAt: new Date() },
+      { new: true }
+    );
+    if (!notification) {
+      res.status(404).json({ success: false, message: 'Notification not found.' });
+      return;
+    }
 
     res.json({ success: true, message: 'Notification marked as read.' });
   } catch (err: any) {

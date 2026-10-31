@@ -24,10 +24,14 @@ export const authenticate = async (
       return;
     }
 
-    const secret = process.env.JWT_SECRET || 'super_secret_jwt_subflow_2026';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      res.status(500).json({ success: false, message: 'Authentication is not configured.' });
+      return;
+    }
     const decoded: any = jwt.verify(token, secret);
 
-    const user = await User.findById(decoded.id).select('+password');
+    const user = await User.findById(decoded.id);
     if (!user) {
       res.status(401).json({ success: false, message: 'User belonging to this token no longer exists.' });
       return;
