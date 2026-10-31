@@ -10,6 +10,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import { initBillingScheduler } from './services/billingScheduler.js';
 import { swaggerRouter } from './docs/swaggerDocs.js';
+import { getTransporter } from './services/emailService.js';
 
 dotenv.config();
 
@@ -31,8 +32,28 @@ app.use('/api/docs', swaggerRouter);
 // Apply rate limiting to all standard API routes
 app.use('/api', apiLimiter);
 
-// Healthcheck Route
-app.get('/api/health', (req, res) => {
+// Healthcheck Route with SMTP status
+app.get('/api/health', async (req, res) => {
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || '';
+  const smtpPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').replace(/\s+/g, '');
+
+  let smtpVerified = false;
+  let smtpError: string | null = null;
+
+  if (req.query.check_smtp === '1') {
+    try {
+      const mailer = await getTransporter();
+      if (mailer) {
+        await mailer.verify();
+        smtpVerified = true;
+      } else {
+        smtpError = 'Mailer is null: missing SMTP_USER or SMTP_PASS';
+      }
+    } catch (err: any) {
+      smtpError = err.message;
+    }
+  }
+
   res.json({
     status: 'healthy',
     name: 'Billflow 2.0 API',
@@ -40,6 +61,13 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     version: '2.0.0',
     theme: 'orange',
+    smtp: {
+      user: smtpUser ? `${smtpUser.substring(0, 4)}***` : 'NOT_CONFIGURED',
+      passConfigured: Boolean(smtpPass),
+      passLength: smtpPass ? smtpPass.length : 0,
+      verified: smtpVerified,
+      error: smtpError,
+    },
   });
 });
 

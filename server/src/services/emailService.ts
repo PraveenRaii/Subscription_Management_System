@@ -4,7 +4,7 @@ dotenv.config();
 
 let transporter: nodemailer.Transporter | null = null;
 
-async function getTransporter(): Promise<nodemailer.Transporter | null> {
+export async function getTransporter(): Promise<nodemailer.Transporter | null> {
   if (transporter) return transporter;
 
   try {
