@@ -25,7 +25,8 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.16",
     "pdfkit": "^0.15.2",
-    "razorpay": "^2.9.5"
+    "razorpay": "^2.9.5",
+    "subscription-management-system-2": "file:.."
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
