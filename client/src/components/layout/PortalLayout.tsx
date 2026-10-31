@@ -39,25 +39,25 @@ export const PortalLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col text-zinc-900 dark:text-zinc-100 transition-colors">
+    <div className="min-h-screen min-w-0 bg-zinc-50 dark:bg-zinc-950 flex flex-col text-zinc-900 dark:text-zinc-100 transition-colors">
       {/* Portal Top Bar */}
       <header className="sticky top-0 z-40 h-16 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to="/portal" className="flex items-center gap-2">
+          <Link to="/portal" className="flex min-w-0 items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-orange-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
               <Repeat className="w-4 h-4 stroke-[2.5]" />
             </div>
-            <span className="font-extrabold text-base tracking-tight text-zinc-900 dark:text-white">
+            <span className="shrink-0 font-extrabold text-base tracking-tight text-zinc-900 dark:text-white">
               Sub<span className="text-orange-500">Flow</span>
             </span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-semibold border border-orange-200 dark:border-orange-900/60">
+            <span className="hidden sm:inline-flex text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-semibold border border-orange-200 dark:border-orange-900/60">
               Customer Portal
             </span>
           </Link>
         </div>
 
         {/* Right Portal Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-3">
           {/* If user is admin/staff viewing portal, show shortcut to admin */}
           {(user?.role === 'super_admin' || user?.role === 'staff') && (
             <Link
@@ -103,7 +103,7 @@ export const PortalLayout: React.FC = () => {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-white">
+              <h1 className="break-words text-xl font-bold text-zinc-900 dark:text-white">
                 {customer?.companyName || user?.name || 'Customer Account'}
               </h1>
               <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
@@ -111,7 +111,7 @@ export const PortalLayout: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-              Customer ID: <span className="font-mono font-medium text-orange-500">{customer?.customerId || 'CUST-8001'}</span> • Primary Contact: {user?.email}
+              Customer ID: <span className="font-mono font-medium text-orange-500">{customer?.customerId || 'CUST-8001'}</span> • Primary Contact: <span className="break-all">{user?.email}</span>
             </p>
           </div>
 
