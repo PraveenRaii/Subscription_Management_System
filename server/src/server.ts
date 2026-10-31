@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 import { connectDB } from './config/db.js';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -41,8 +43,27 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Mount Routes
+// Mount API Routes
 app.use('/api', routes);
+
+// Serve Frontend Static Files in Production (Full-Stack Render Deploy)
+const clientDistPath = path.resolve(process.cwd(), '../client/dist');
+const altClientDistPath = path.resolve(process.cwd(), 'client/dist');
+const activeDist = fs.existsSync(clientDistPath)
+  ? clientDistPath
+  : fs.existsSync(altClientDistPath)
+  ? altClientDistPath
+  : null;
+
+if (activeDist) {
+  app.use(express.static(activeDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(activeDist, 'index.html'));
+  });
+}
 
 // Error Handling Middleware
 app.use(errorHandler);

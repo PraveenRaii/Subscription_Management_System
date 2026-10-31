@@ -1,4 +1,4 @@
-const API_ORIGIN = import.meta.env.VITE_API_URL || '';
+const API_ORIGIN = (import.meta as any).env?.VITE_API_URL || '';
 const BASE_URL = `${API_ORIGIN}/api`;
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
